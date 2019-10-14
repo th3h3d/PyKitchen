@@ -1,4 +1,4 @@
-"""---"""
+"""pyFork is for testing data in CSV format"""
 
 import pandas
 import re
@@ -19,8 +19,6 @@ __all__ = []
 
 class TestCSV():
 	"""-"""
-
-	#overview messages
 	_passed = 0
 	_failed = 0
 
@@ -48,7 +46,7 @@ class TestCSV():
 
 	@classmethod
 	def _read_csv(cls) -> str:
-		"""-"""
+		"""reads csv file and keeps in dataframe"""
 		try:
 			TestCSV._data_frame = pandas.read_csv(TestCSV._csv_file_name);
 			TestCSV._logger._info("CSV file '{}' is successfully loaded.".format(TestCSV._csv_file_name));
@@ -63,7 +61,7 @@ class TestCSV():
 
 	@classmethod
 	def _read_json(cls) -> str:
-		"""-"""
+		"""reads json file and keeps in dataframe"""
 		try:
 			TestCSV._mapping_frame = pandas.read_json(TestCSV._json_file_name);
 			TestCSV._logger._info("JSON file '{}' is successfully loaded.".format(TestCSV._json_file_name));
@@ -75,7 +73,7 @@ class TestCSV():
 
 	@classmethod
 	def _case_iteration(cls) -> str:
-		"""-"""
+		"""itrates dataframe from json file and parse argument to corresponding function"""
 		try:
 			for itr_index in range(len(TestCSV._mapping_frame["case"])):
 				if TestCSV._mapping_frame["type"][itr_index].upper() == "ISINTEGER":
@@ -136,30 +134,30 @@ class TestCSV():
 			return "1"
 		pass
 
-
 	@classmethod
 	def _collect_failure(cls, colum_name, row_number, test_type, arg1, arg2, data) -> str:
-		"""-"""
+		"""collects failed data in a array"""
 		try:
 			bug_report_line = list()
+			#generates array structure
 			bug_report_line.append(colum_name)
 			bug_report_line.append(row_number)
 			bug_report_line.append(test_type)
 			bug_report_line.append(arg1)
 			bug_report_line.append(arg2)
 			bug_report_line.append(data)
+			#keeps in global array
 			TestCSV._found_bugs.append(bug_report_line)
+
 			return "0";
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_collect_failure' -> "+str(e))
 			return "1";
 		pass
 
-
-
 	@classmethod
 	def _isinteger(cls, column_name) -> str:
-		"""-"""
+		"""executes _isinteger method"""
 		try:
 			test_type = "IsInteger";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -179,7 +177,7 @@ class TestCSV():
 
 	@classmethod
 	def _isnegativeinteger(cls, column_name) -> str:
-		"""-"""
+		"""executes _isnegativeinteger method"""
 		try:
 			test_type = "IsNegativeInteger";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -196,9 +194,10 @@ class TestCSV():
 			TestCSV._logger._error("Error occurred! in '_isnegativeinteger' -> "+str(e))
 			return "1"
 		pass
+
 	@classmethod
 	def _isdouble(cls, column_name) -> str:
-		"""-"""
+		"""executes _isdouble method"""
 		try:
 			test_type = "IsDouble";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -218,7 +217,7 @@ class TestCSV():
 
 	@classmethod
 	def _isnegativedouble(cls, column_name) -> str:
-		"""-"""
+		"""executes _isnegativedouble method"""
 		try:
 			test_type = "IsNegativeDouble";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -236,10 +235,9 @@ class TestCSV():
 			return "1"
 		pass
 
-
 	@classmethod
 	def _isnull(cls, column_name) -> str:
-		"""-"""
+		"""executes _isnull method"""
 		try:
 			test_type = "IsNull";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -259,7 +257,7 @@ class TestCSV():
 
 	@classmethod
 	def _isnotnull(cls, column_name) -> str:
-		"""-"""
+		"""executes _isnotnull method"""
 		try:
 			test_type = "IsNotNull";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -277,10 +275,9 @@ class TestCSV():
 			return "1"
 		pass
 
-
 	@classmethod
 	def _isalphanumeric(cls, column_name) -> str:
-		"""-"""
+		"""executes _isalphanumeric method"""
 		try:
 			test_type = "IsAlphaNumeric";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -300,7 +297,7 @@ class TestCSV():
 
 	@classmethod
 	def _isalphabetic(cls, column_name) -> str:
-		"""-"""
+		"""executes _isalphabetic method"""
 		try:
 			test_type = "IsAlphabetic";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -318,10 +315,9 @@ class TestCSV():
 			return "1"
 		pass
 
-
 	@classmethod
 	def _isspace(cls, column_name) -> str:
-		"""-"""
+		"""executes _isspace method"""
 		try:
 			test_type = "IsSpace";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -339,10 +335,9 @@ class TestCSV():
 			return "1"
 		pass
 
-
 	@classmethod
 	def _isregex(cls, column_name, arg1) -> str:
-		"""-"""
+		"""executes _isregex method"""
 		try:
 			test_type = "IsRegex";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -360,10 +355,9 @@ class TestCSV():
 			return "1"
 		pass
 
-
 	@classmethod
 	def is_value_numeric_at_all(cls, value):
-		"""Specil method to check value is numeric or not"""
+		"""Specil method to check value that is it numeric or not"""
 		try:
 			int(value)
 			return True
@@ -372,7 +366,7 @@ class TestCSV():
 
 	@classmethod
 	def _islessthan(cls, column_name, arg1) -> str:
-		"""-"""
+		"""executes _islessthan method"""
 		try:
 			test_type = "IsLessThan";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -394,10 +388,9 @@ class TestCSV():
 			return "1"
 		pass
 
-
 	@classmethod
 	def _isgreaterthan(cls, column_name, arg1) -> str:
-		"""-"""
+		"""executes _isgreaterthan method"""
 		try:
 			test_type = "IsGreaterThan";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -420,7 +413,7 @@ class TestCSV():
 
 	@classmethod
 	def _islessthanorequalsto(cls, column_name, arg1) -> str:
-		"""-"""
+		"""executes _islessthanorequalsto method"""
 		try:
 			test_type = "IsLessThanOrEqualsTo";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -442,10 +435,9 @@ class TestCSV():
 			return "1"
 		pass
 
-
 	@classmethod
 	def _isgreaterthanorequalsto(cls, column_name, arg1) -> str:
-		"""-"""
+		"""executes _isgreaterthanorequalsto method"""
 		try:
 			test_type = "IsGreaterThanOrEqualsTo";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -467,10 +459,9 @@ class TestCSV():
 			return "1"
 		pass
 
-
 	@classmethod
 	def _isinbetween(cls, column_name, arg1, arg2) -> str:
-		"""-"""
+		"""executes _isinbetween method"""
 		try:
 			test_type = "IsInBetween";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -492,10 +483,9 @@ class TestCSV():
 			return "1"
 		pass
 
-
 	@classmethod
 	def _isinbetweenorequalsto(cls, column_name, arg1, arg2) -> str:
-		"""-"""
+		"""executes _isinbetweenorequalsto method"""
 		try:
 			test_type = "IsInBetweenOrEqualsTo";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -517,10 +507,9 @@ class TestCSV():
 			return "1"
 		pass
 
-
 	@classmethod
 	def _ismaxlength(cls, column_name, arg1) -> str:
-		"""-"""
+		"""executes _ismaxlength method"""
 		try:
 			test_type = "IsMaxLength";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -542,7 +531,7 @@ class TestCSV():
 
 	@classmethod
 	def _isminlenght(cls, column_name, arg1) -> str:
-		"""-"""
+		"""executes _isminlenght method"""
 		try:
 			test_type = "IsMinLenght";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -562,7 +551,7 @@ class TestCSV():
 
 	@classmethod
 	def _isexactlength(cls, column_name, arg1) -> str:
-		"""-"""
+		"""executes _isexactlength method"""
 		try:
 			test_type = "IsExactLength";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -583,7 +572,7 @@ class TestCSV():
 
 	@classmethod
 	def _islenghtinbetween(cls, column_name, arg1, arg2) -> str:
-		"""-"""
+		"""executes _islenghtinbetween method"""
 		try:
 
 			test_type = "IsLenghtInBetween";
@@ -604,7 +593,7 @@ class TestCSV():
 
 	@classmethod
 	def _islenghtinbetweenorequalsto(cls, column_name, arg1, arg2) -> str:
-		"""-"""
+		"""executes _islenghtinbetweenorequalsto method"""
 		try:
 			test_type = "IsLenghtInBetweenOrEqualsTo";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -625,7 +614,7 @@ class TestCSV():
 
 	@classmethod
 	def _isvaluerange(cls, column_name, arg1) -> str:
-		"""-"""
+		"""executes _isvaluerange method"""
 		try:
 			test_type = "IsValueRange";
 			for itr_index in range(len(TestCSV._data_frame)):
@@ -645,7 +634,7 @@ class TestCSV():
 
 	@classmethod
 	def _isunique(cls, column_name) -> str:
-		"""-"""
+		"""executes _isunique method"""
 		try:
 			test_type = "IsUnique";
 			all_data = list(TestCSV._data_frame[column_name])
@@ -666,9 +655,8 @@ class TestCSV():
 
 	@classmethod
 	def _reporting_result(cls, output_type) -> str:
-		"""-"""
+		"""Generate result diffirent format"""
 		try:
-			print(TestCSV._found_bugs)
 			file_name = TestCSV._csv_file_name+"_Report"+time.strftime("%Y%m%d%H%M%S", time.localtime());
 			header = ["COLUMN_NAME","ROW_NUMER","TEST_TYPE","ARG_1","ARG_2","FAILED_DATA"]
 			if output_type.upper() == "CSV":
@@ -700,8 +688,8 @@ class TestCSV():
 #Reporting part!
 
 	@classmethod
-	def class_starter(cls, csv_file_name, json_file_name, output_type) -> str:
-		"""-"""
+	def master_method(cls, csv_file_name, json_file_name, output_type) -> str:
+		"""Master method, where class methods are called"""
 		try:
 
 			TestCSV._csv_file_name = csv_file_name;
@@ -709,9 +697,11 @@ class TestCSV():
 			TestCSV._json_file_name = json_file_name;
 			TestCSV._read_json();
 			TestCSV._case_iteration();
+			print("--Execution is started")
 			TestCSV._reporting_result(output_type);
+			print("--Execution is finished")
 
-			TestCSV._logger._info("class_starter method is finished")
+			TestCSV._logger._info("master_method method is finished")
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in 'main' -> "+str(e))
@@ -719,7 +709,24 @@ class TestCSV():
 		pass
 
 
+def runner(args):
+	"""runner stays in between master method and main method"""
+	if args.example == "testcase":
+		f = open("testcase.json","w")
+		f.write("""[{"case":"1","column": "Region","type": "IsNotNull","arg1": null,"arg2": null},{"case":"2","column": "Order Priority","type": "IsValueRange","arg1": "(M|C)","arg2": null}]""")
+		f.close()
+	elif args.example == "report":
+		f = open("report.csv","w")
+		f.write("Region,Country,Item Type,Sales Channel,Order Priority\nAsia,Singapore,Snacks,Online,C\nSub-Saharan Africa,Ethiopia,Cosmetics,Online,M\nAfrica,Tanzania,Cosmetics,Offline,M")
+		f.close()
+	else:
+		test_agent = pyFork.TestCSV()
+		test_agent.master_method(args.report, args.testcase, args.output)
+
+
+
 def main():
+	"""User Interface for console"""
 	my_parser = argparse.ArgumentParser()
 
 	my_parser.add_argument('--report', type=str, help="Provide your report file, Example: 'report.csv'")
@@ -732,54 +739,9 @@ def main():
 
 	args = my_parser.parse_args()
 
-	run(args)
+	runner(args)
 
-
-def run(args):
-	if args.example == "testcase":
-		f = open("testcase.json","w")
-		f.write("""[{"case":"1","column": "Region","type": "IsNotNull","arg1": null,"arg2": null},{"case":"2","column": "Order Priority","type": "IsValueRange","arg1": "(M|C)","arg2": null}]""")
-		f.close()
-	elif args.example == "report":
-		f = open("report.csv","w")
-		f.write("Region,Country,Item Type,Sales Channel,Order Priority\nAsia,Singapore,Snacks,Online,C\nSub-Saharan Africa,Ethiopia,Cosmetics,Online,M\nAfrica,Tanzania,Cosmetics,Offline,M")
-		f.close()
-	else:
-		test_agent = pyFork.TestCSV()
-		test_agent.class_starter(args.report, args.testcase, args.output)
 
 if __name__ == '__main__':
+	"""main method where script start running"""
 	main()
-
-"""
-"ISINTEGER[*]"
-"ISNEGATIVEINTEGER[*]":
-"ISDOUBLE[*]":
-"ISNEGATIVEDOUBLE[*]":
-"ISNULL[*]":
-"ISNOTNULL[*]":
-"ISALPHANUMERIC[*]":
-"ISALPHABETIC[*]":
-"ISSPACE[*]":
-"ISREGEX["regex"]":
-"ISLESSTHAN[1]":
-"ISGREATERTHAN[1]":
-"ISLESSTHANOREQUALSTO[1]":
-"ISGREATERTHANOREQUALSTO[1]":
-"ISINBETWEEN[1][5]":
-"ISINBETWEENOREQUALSTO[1][2]":
-"ISMAXLENGTH[1]":
-"ISMINLENGTH[1]":
-"ISEXACTLENGTH[1]":
-"ISLENGTHINBETWEEN[1][2]":
-"ISLENGTHINBETWEENOREQUALSTO[1][2]":
-"ISVALUERANGE["(A|B)"]":
-"ISUNIQUE[*]":
-
-P.s
-[*] = no parameter
-[1] = 1 paramter
-[1][2] = 2 paramters
-["^\\d+"] = regex
-
-"""
