@@ -27,7 +27,7 @@ class TestCSV():
 	_csv_file_name = "";
 	_json_file_name = "";
 	_data_frame = pandas.DataFrame();
-	_mappng_frame = pandas.DataFrame();
+	_mapping_frame = pandas.DataFrame();
 
 	_found_bugs = list()
 
@@ -685,8 +685,6 @@ class TestCSV():
 		pass
 
 
-#Reporting part!
-
 	@classmethod
 	def master_method(cls, csv_file_name, json_file_name, output_type) -> str:
 		"""Master method, where class methods are called"""
@@ -743,5 +741,5 @@ def main():
 
 
 if __name__ == '__main__':
-	"""main method where script start running"""
+	"""main method where the script starts running"""
 	main()
