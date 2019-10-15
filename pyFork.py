@@ -242,7 +242,7 @@ class TestCSV():
 			test_type = "IsNull";
 			for itr_index in range(len(TestCSV._data_frame)):
 				bug_store = [];
-				if TestCSV._data_frame[column_name][itr_index] == 'nan':
+				if TestCSV._data_frame[column_name][itr_index] == "":
 					TestCSV._passed += 1; 
 				else:
 					TestCSV._failed += 1; 
@@ -262,7 +262,7 @@ class TestCSV():
 			test_type = "IsNotNull";
 			for itr_index in range(len(TestCSV._data_frame)):
 				bug_store = [];
-				if TestCSV._data_frame[column_name][itr_index] != 'nan':
+				if TestCSV._data_frame[column_name][itr_index] != "":
 					TestCSV._passed += 1; 
 				else:
 					TestCSV._failed += 1; 
