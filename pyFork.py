@@ -1,4 +1,5 @@
 """pyFork is for testing data in CSV format"""
+#a git connection test
 
 import pandas
 import re
@@ -14,8 +15,6 @@ __version__ = '1.0'
 __author__ = ("Haci Emre Dasgin <haci.dasgin@gmail.com>")
 
 __all__ = []
-
-
 
 class TestCSV():
 	"""-"""
