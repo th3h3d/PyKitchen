@@ -27,6 +27,7 @@ class TestCSV():
 	_json_file_name = "";
 	_data_frame = pandas.DataFrame();
 	_mapping_frame = pandas.DataFrame();
+	_csv_header = list()
 
 	_found_bugs = list()
 
@@ -50,6 +51,7 @@ class TestCSV():
 			TestCSV._data_frame = pandas.read_csv(TestCSV._csv_file_name);
 			TestCSV._logger._info("CSV file '{}' is successfully loaded.".format(TestCSV._csv_file_name));
 			TestCSV._data_frame = TestCSV._data_frame.applymap(str);#changes all data type of dataframe to string
+			TestCSV._csv_header = list(TestCSV._data_frame.columns); #get csv header
 			TestCSV._data_frame = TestCSV._data_frame.replace(to_replace = "nan", value ="");#converts nan to ""
 			TestCSV._logger._info("All data type is converted to 'string' data type.");
 			return "0";
@@ -69,6 +71,26 @@ class TestCSV():
 			TestCSV._logger._error("Error occurred! in '_read_json' -> "+str(e))
 			return "1";
 		pass
+
+	@classmethod
+	def _csv_header_check(cls) -> str:
+		"""This method checks csv header"""
+		try:
+			for itr_index in range(len(TestCSV._mapping_frame["case"])):
+				if TestCSV._csv_header.count(TestCSV._mapping_frame["column"][itr_index]) == 1:
+					pass
+				else:
+					TestCSV._logger._error("Column '{}' could not be found in '{}' file.".format(TestCSV._mapping_frame["column"][itr_index],TestCSV._csv_file_name));
+					print("--File check is failed, Please check the log.")
+					return "1";
+
+			TestCSV._logger._info("Header check is finished.");
+			return "0";
+		except Exception as e:
+			TestCSV._logger._error("Error occurred! in '_csv_header_check' -> "+str(e))
+			return "1";
+		pass
+
 
 	@classmethod
 	def _case_iteration(cls) -> str:
@@ -693,10 +715,12 @@ class TestCSV():
 			TestCSV._read_csv();
 			TestCSV._json_file_name = json_file_name;
 			TestCSV._read_json();
-			TestCSV._case_iteration();
-			print("--Execution is started")
-			TestCSV._reporting_result(output_type);
-			print("--Execution is finished")
+
+			if TestCSV._csv_header_check() == '0':
+				TestCSV._case_iteration();
+				print("--Execution is started")
+				TestCSV._reporting_result(output_type);
+				print("--Execution is finished")
 
 			TestCSV._logger._info("master_method method is finished")
 			return "0"
