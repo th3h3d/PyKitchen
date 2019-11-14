@@ -6,6 +6,6 @@
    "source_primary_keys":"id",
    "target_table":"target",
    "target_query":"SELECT Region_T AS Rg, Country_T AS Ctr, ItemType_T AS ItmTyp, SalesChannel_T AS Slcl, OrderPriority_T AS Odpr, OrderDate_T AS Ordt, OrderID_T AS Orid , ShipDate_T AS Shpdt, UnitsSold_T AS Untsl, UnitPrice_T AS Untpr, UnitCost_T AS Untcst, TotalRevenue_T AS Ttlrv, TotalCost_T AS Ttlcs, TotalProfit_T AS Ttlprf, id_T as ID FROM target",
-   "target_primary_keys":"id_T",
+   "target_primary_keys":"id_T"
  }
 ]

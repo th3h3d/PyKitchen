@@ -1,4 +1,4 @@
-"""pyFork is for testing data in CSV format"""
+"""pyKnife is for comparing database to database"""
 
 import pandas
 import time
@@ -329,7 +329,7 @@ class Testdb2db():
 
 	@classmethod
 	def _reporting_javascript(cls) -> str:
-		"""_"""
+		"""Generate html report"""
 		try:
 			source_sql_statement = '';
 			for i in range(len(Testdb2db._source_query)):
@@ -420,7 +420,7 @@ def runner(args):
 		print("connection.json is created")
 	elif args.example == "mapping":
 		f = open("mapping.json","w")
-		f.write("""[{"case":"1","source_table":"source","source_query":"SELECT Region AS Rg, Country AS Ctr, ItemType AS ItmTyp, SalesChannel AS Slcl, OrderPriority AS Odpr, OrderDate AS Ordt, OrderID AS Orid , ShipDate AS Shpdt, UnitsSold AS Untsl, UnitPrice AS Untpr, UnitCost AS Untcst, TotalRevenue AS Ttlrv, TotalCost AS Ttlcs, TotalProfit AS Ttlprf, id as ID FROM source","source_primary_keys":"id","target_table":"target","target_query":"SELECT Region_T AS Rg, Country_T AS Ctr, ItemType_T AS ItmTyp, SalesChannel_T AS Slcl, OrderPriority_T AS Odpr, OrderDate_T AS Ordt, OrderID_T AS Orid , ShipDate_T AS Shpdt, UnitsSold_T AS Untsl, UnitPrice_T AS Untpr, UnitCost_T AS Untcst, TotalRevenue_T AS Ttlrv, TotalCost_T AS Ttlcs, TotalProfit_T AS Ttlprf, id_T as ID FROM target","target_primary_keys":"id_T",}]""")
+		f.write("""[{"case":"1","source_table":"source","source_query":"SELECT Region AS Rg, Country AS Ctr, ItemType AS ItmTyp, SalesChannel AS Slcl, OrderPriority AS Odpr, OrderDate AS Ordt, OrderID AS Orid , ShipDate AS Shpdt, UnitsSold AS Untsl, UnitPrice AS Untpr, UnitCost AS Untcst, TotalRevenue AS Ttlrv, TotalCost AS Ttlcs, TotalProfit AS Ttlprf, id as ID FROM source","source_primary_keys":"id","target_table":"target","target_query":"SELECT Region_T AS Rg, Country_T AS Ctr, ItemType_T AS ItmTyp, SalesChannel_T AS Slcl, OrderPriority_T AS Odpr, OrderDate_T AS Ordt, OrderID_T AS Orid , ShipDate_T AS Shpdt, UnitsSold_T AS Untsl, UnitPrice_T AS Untpr, UnitCost_T AS Untcst, TotalRevenue_T AS Ttlrv, TotalCost_T AS Ttlcs, TotalProfit_T AS Ttlprf, id_T as ID FROM target","target_primary_keys":"id_T"}]""")
 		f.close()
 		print("mapping.json is created")
 	elif args.example == "jsrawreportcode":
