@@ -1,0 +1,9 @@
+[
+ {
+   "source_database_type":"sqlite",
+   "source_connection_string":"sqlite:////Users/th3h3d/Desktop/pyKnife/testdb.db",
+   "target_database_type":"oracle",
+   "target_connection_string":"sqlite:////Users/th3h3d/Desktop/pyKnife/testdb.db",
+   "mapped_tables":"mapping1.json"
+ }
+]

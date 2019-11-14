@@ -1,0 +1,6 @@
+<script>
+$.reportInfo.dataHeaderDiff = @4055586c28f35be98535a1728a4248a9@;
+$.reportInfo.diffData = @7906899a18b96a3f8142fa93a0da4e74@;
+$.reportInfo.source.sql = "@595aa739fc58403c7c62cc2840d0b7fb@";
+$.reportInfo.target.sql = "@69e396acbd4d981461374b77cabc07ff@";
+<\script>
