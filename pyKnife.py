@@ -1,4 +1,4 @@
-"""pyKnife is for comparing database to database"""
+"""pyFork is for testing data in CSV format"""
 
 import pandas
 import time
@@ -43,6 +43,7 @@ class Testdb2db():
 	_target_table = "";
 	_target_query = "";
 	_target_primary_keys = "";
+	_common_header = "";
 
 	_source_data = pandas.DataFrame();
 	_target_data = pandas.DataFrame();
@@ -50,7 +51,7 @@ class Testdb2db():
 	_result_of_comparison = list();
 	_header_of_result_of_comparison = list();
 
-
+	_report_output_type = "";
 
 	_found_bugs = list()
 
@@ -63,6 +64,7 @@ class Testdb2db():
 	def _read_json_connection(cls) -> str:
 		"""reads mapping file file and keeps in dataframe"""
 		try:
+			Testdb2db._printerim("Connection info is being read.")
 			Testdb2db._data_frame_connection = pandas.read_json(Testdb2db._connection_file_name);
 			Testdb2db._logger._info("JSON file '{}' is successfully loaded.".format(Testdb2db._connection_file_name));
 			Testdb2db._data_frame_connection = Testdb2db._data_frame_connection.applymap(str); #changes all data type of dataframe to string
@@ -92,6 +94,7 @@ class Testdb2db():
 			
 			
 			Testdb2db._logger._info("Validation of connection info is successfully finised.");
+			Testdb2db._printerim("Connection validation is passed.")
 			Testdb2db._set_mapping_file_name();
 			return "0";
 		except Exception as e:
@@ -101,7 +104,7 @@ class Testdb2db():
 
 	@classmethod
 	def _set_mapping_file_name(cls) -> str:
-		"""sets file name for mapping file"""
+		"""sets file name for mapping file, connection between 'connection.json' and 'mapping*.json'"""
 		try:
 			Testdb2db._mapping_file_name = Testdb2db._data_frame_connection['mapped_tables'][0]
 			Testdb2db._logger._info("File name '{}' is set for reading mapping file.".format(Testdb2db._mapping_file_name));
@@ -118,6 +121,7 @@ class Testdb2db():
 	def _read_json_mapping(cls) -> str:
 		"""reads mapping file file and keeps in dataframe"""
 		try:
+			Testdb2db._printerim("Mapping info is being read.")
 			Testdb2db._data_frame_mapping = pandas.read_json(Testdb2db._mapping_file_name);
 			Testdb2db._logger._info("JSON file '{}' is successfully loaded.".format(Testdb2db._data_frame_mapping));
 			Testdb2db._data_frame_mapping = Testdb2db._data_frame_mapping.applymap(str); #changes all data type of dataframe to string
@@ -134,7 +138,7 @@ class Testdb2db():
 	def _validation_of_mapping(cls) -> str:
 		"""_"""
 		try:
-			mapping_header = ['case','source_table','source_query','source_primary_keys','target_table','target_query','target_primary_keys']
+			mapping_header = ['case','source_table','source_query','source_primary_keys','target_table','target_query','target_primary_keys','common_header']
 			mapping_header_from_file = list(Testdb2db._data_frame_mapping.columns)
 
 			for itr_index in range(len(mapping_header)):
@@ -144,9 +148,9 @@ class Testdb2db():
 					Testdb2db._logger._error("Connection info {} is missing in the {} file.".format(mapping_header[itr_index],Testdb2db._mapping_file_name));
 					Testdb2db._logger._error("File headers: '{}'".format(mapping_header_from_file));
 					return "1";
-
 			
 			Testdb2db._logger._info("Validation of mapping is successfully finised.");
+			Testdb2db._printerim("Mapping validation is passed.")
 			Testdb2db._variable_setting_connection();
 			return "0";
 		except Exception as e:
@@ -177,20 +181,22 @@ class Testdb2db():
 	def _set_data_with_iteration(cls) -> str:
 		"""_"""
 		try:
+			Testdb2db._printerim("{} iteration(s) are detected.".format(len(Testdb2db._data_frame_mapping)))
 			for itr_index in range(len(Testdb2db._data_frame_mapping)):
 				Testdb2db._case = Testdb2db._data_frame_mapping['case'][itr_index];
+				Testdb2db._printerim("Case {} is being iterated.".format(Testdb2db._case))
 				Testdb2db._source_table = Testdb2db._data_frame_mapping['source_table'][itr_index];
 				Testdb2db._source_query = Testdb2db._data_frame_mapping['source_query'][itr_index];
 				Testdb2db._source_primary_keys = Testdb2db._data_frame_mapping['source_primary_keys'][itr_index];
 				Testdb2db._target_table = Testdb2db._data_frame_mapping['target_table'][itr_index];
 				Testdb2db._target_query = Testdb2db._data_frame_mapping['target_query'][itr_index];
 				Testdb2db._target_primary_keys = Testdb2db._data_frame_mapping['target_primary_keys'][itr_index];
+				Testdb2db._common_header = Testdb2db._data_frame_mapping['common_header'][itr_index];
 				Testdb2db._logger._info("Variable setting is successfully finished for case {}".format(itr_index))
-				
+				Testdb2db._logger._info("Variable setting and iteration is successfully finised for mapping data.");
+				Testdb2db._query_data_for_source();
+				Testdb2db._printerim("Case {} is completed.\n".format(Testdb2db._case))
 
-
-			Testdb2db._logger._info("Variable setting and iteration is successfully finised for mapping data.");
-			Testdb2db._query_data_for_source()	
 			return "0";
 		except Exception as e:
 			Testdb2db._logger._error("Error occurred! in '_set_data_with_iteration' -> "+str(e))
@@ -201,6 +207,7 @@ class Testdb2db():
 	def _query_data_for_source(cls) -> str:
 		"""_"""
 		try:
+			Testdb2db._printerim("Source data is being read.")
 			db_engine = create_engine(Testdb2db._source_connection_string)
 			db_connection = db_engine.connect()
 			output_data_from_db = db_connection.execute(Testdb2db._source_query)
@@ -224,6 +231,7 @@ class Testdb2db():
 	def _query_data_for_target(cls) -> str:
 		"""_"""
 		try:
+			Testdb2db._printerim("Target data is being read.")
 			db_engine = create_engine(Testdb2db._target_connection_string)
 			db_connection = db_engine.connect()
 			output_data_from_db = db_connection.execute(Testdb2db._target_query)
@@ -247,6 +255,7 @@ class Testdb2db():
 	def _prepare_data_comparasion_result(cls) -> str:
 		"""_"""
 		try:
+			Testdb2db._printerim("Data is being compared.")
 			result = list()
 			header = list()
 			make_dict = {"source":Testdb2db._source_data, "target":Testdb2db._target_data}
@@ -302,15 +311,20 @@ class Testdb2db():
 				for j in range(len(result[i])):
 					result[i][j] = str(result[i][j])
 
-			#set source header
-			header.append("System")
-			for i in range(len(Testdb2db._source_data.columns)):
-				header.append('column_'+str(i))
-			#set target header
-			header.append("System")
-			for i in range(len(Testdb2db._target_data.columns)):
-				header.append('column_'+str(i))		
-
+			#set headers
+			common_header_for_both = Testdb2db._common_header.split(",")
+			if len(common_header_for_both) == len(Testdb2db._source_data.columns) and len(common_header_for_both) == len(Testdb2db._target_data.columns):
+				#set source header
+				header.append("System")
+				for itr_index in range(len(common_header_for_both)):
+					header.append(common_header_for_both[itr_index])
+				#set target header
+				header.append("System")
+				for itr_index in range(len(common_header_for_both)):
+					header.append(common_header_for_both[itr_index])
+			else:
+				Testdb2db._logger._error("Error occurred! Either source or target column length (source: {}, target: {}) does not match with defined common headers (common header: {})".format(len(Testdb2db._source_data.columns),len(Testdb2db._target_data.columns),len(common_header_for_both)))
+				return "1";
 
 			Testdb2db._header_of_result_of_comparison = str(header);
 			Testdb2db._logger._info("Data header: {}".format(Testdb2db._header_of_result_of_comparison));
@@ -318,8 +332,24 @@ class Testdb2db():
 			Testdb2db._result_of_comparison = str(result);
 			Testdb2db._logger._info("Data unmatched data: {}".format(Testdb2db._result_of_comparison));
 
-
 			Testdb2db._logger._info("Data comparasion result is prepared.");
+
+			#if there is no unmatched data, stop right here
+			if len(result) == 0:
+				Testdb2db._printerim("All data is matched!")
+				Testdb2db._printerim("Report is NOT printed!")
+				return "0";				
+
+
+			#output file method calls happen here.
+			if Testdb2db._report_output_type == "javascript":
+				Testdb2db._reporting_javascript();
+			elif Testdb2db._report_output_type == "csv":
+				Testdb2db._reporting_csv()
+			else:
+				Testdb2db._logger._error("Output type '{}' is not chosen!".format(Testdb2db._report_output_type))
+				return "1";
+
 			return "0";
 		except Exception as e:
 			Testdb2db._logger._error("Error occurred! in '_prepare_data_comparasion_result' -> "+str(e))
@@ -329,8 +359,9 @@ class Testdb2db():
 
 	@classmethod
 	def _reporting_javascript(cls) -> str:
-		"""Generate html report"""
+		"""_"""
 		try:
+			Testdb2db._printerim("HTML report is being generated.")
 			source_sql_statement = '';
 			for i in range(len(Testdb2db._source_query)):
 				if i % 60 == 0 and i != 0:
@@ -339,7 +370,7 @@ class Testdb2db():
 					source_sql_statement = source_sql_statement + str(Testdb2db._source_query[i])
 
 			target_sql_statement = '';
-			for i in range(len(Testdb2db._source_query)):
+			for i in range(len(Testdb2db._target_query)):
 				if i % 60 == 0 and i != 0:
 					target_sql_statement = target_sql_statement + str(Testdb2db._target_query[i]) + "\\n";
 				else:
@@ -360,8 +391,7 @@ class Testdb2db():
 			file_object_write = io.open(html_report_name, mode="w", encoding="utf-8")
 			file_object_write.write(raw_html_code)
 			
-
-			Testdb2db._logger._info("Report {} has been created.".format(html_report_name));
+			Testdb2db._printerim("Report {} has been created.".format(html_report_name))
 			return "0";
 		except Exception as e:
 			Testdb2db._logger._error("Error occurred! in '_reporting_javascript' -> "+str(e))
@@ -372,6 +402,7 @@ class Testdb2db():
 	def _reporting_csv(cls) -> str:
 		"""Generate CSV report""" #buggy
 		try:
+			Testdb2db._printerim("CSV report is being generated.")
 			csv_report_name = str(Testdb2db._source_table)+str("_")+str(Testdb2db._target_table)+str("__report_")+str(time.strftime("%Y%m%d%H%M%S", time.localtime()))+str(".csv")
 			header = Testdb2db._header_of_result_of_comparison
 			file_object = open(csv_report_name, mode="w", newline="")
@@ -380,28 +411,37 @@ class Testdb2db():
 			for itr_index in range(len(Testdb2db._result_of_comparison)):
 				csv_writer.writerow(Testdb2db._result_of_comparison[itr_index])
 			file_object.close()
-			Testdb2db._logger._info("'{}' report generated.".format(csv_report_name))
+			Testdb2db._printerim("'{}' report generated.".format(csv_report_name))
 			return "0"
 		except Exception as e:
 			Testdb2db._logger._error("Error occurred! in '_reporting_csv' -> "+str(e))
 			return "1"
 		pass
 
+	@classmethod
+	def _printerim(cls, message_to_print_on_console) -> str:
+		"""Master method, where class methods are called"""
+		try:
+			print("-- "+message_to_print_on_console)
+			Testdb2db._logger._info("'{}' message is printed to user!".format(message_to_print_on_console))
+			return "0"
+		except Exception as e:
+			Testdb2db._logger._error("Error occurred! in 'main' -> "+str(e))
+			return "1"
+		pass
 
 	@classmethod
 	def master_method(cls, json_connection_file_name, output_type) -> str:
 		"""Master method, where class methods are called"""
 		try:
-
 			Testdb2db._connection_file_name = json_connection_file_name;
-			Testdb2db._read_json_connection();
-
-			if output_type == "javascript":
-				Testdb2db._reporting_javascript();
-			elif output_type == "csv":
-				Testdb2db._reporting_csv()
+			Testdb2db._report_output_type = output_type;
+			Testdb2db._printerim("Script started.")
+			if Testdb2db._connection_file_name != "" and Testdb2db._report_output_type != "":
+				Testdb2db._read_json_connection();
 			else:
-				Testdb2db._logger._error("Output type '{}' is not chosen!".format(output_type))
+				Testdb2db._logger._error("Error occurred! Either connection or output is not provided")
+				return "1"
 
 			Testdb2db._logger._info("master_method method is finished")
 			return "0"
@@ -415,12 +455,12 @@ def runner(args):
 	"""runner stays in between master method and main method"""
 	if args.example == "connection":
 		f = open("connection.json","w")
-		f.write("""[{"source_database_type":"sqlite","source_connection_string":"sqlite:////Users/th3h3d/Desktop/pyKnife/testdb.db","target_database_type":"oracle","target_connection_string":"sqlite:////Users/th3h3d/Desktop/pyKnife/testdb.db","mapped_tables":"mapping1.json"}]""")
+		f.write("""[{\n"source_database_type":"sqlite",\n"source_connection_string":"sqlite:////Users/th3h3d/Desktop/pyKnife/testdb.db",\n"target_database_type":"oracle",\n"target_connection_string":"sqlite:////Users/th3h3d/Desktop/pyKnife/testdb.db",\n"mapped_tables":"mapping1.json"\n}]""")
 		f.close()
 		print("connection.json is created")
 	elif args.example == "mapping":
-		f = open("mapping.json","w")
-		f.write("""[{"case":"1","source_table":"source","source_query":"SELECT Region AS Rg, Country AS Ctr, ItemType AS ItmTyp, SalesChannel AS Slcl, OrderPriority AS Odpr, OrderDate AS Ordt, OrderID AS Orid , ShipDate AS Shpdt, UnitsSold AS Untsl, UnitPrice AS Untpr, UnitCost AS Untcst, TotalRevenue AS Ttlrv, TotalCost AS Ttlcs, TotalProfit AS Ttlprf, id as ID FROM source","source_primary_keys":"id","target_table":"target","target_query":"SELECT Region_T AS Rg, Country_T AS Ctr, ItemType_T AS ItmTyp, SalesChannel_T AS Slcl, OrderPriority_T AS Odpr, OrderDate_T AS Ordt, OrderID_T AS Orid , ShipDate_T AS Shpdt, UnitsSold_T AS Untsl, UnitPrice_T AS Untpr, UnitCost_T AS Untcst, TotalRevenue_T AS Ttlrv, TotalCost_T AS Ttlcs, TotalProfit_T AS Ttlprf, id_T as ID FROM target","target_primary_keys":"id_T"}]""")
+		f = open("mapping1.json","w")
+		f.write("""[{\n"case":"1",\n"source_table":"source",\n"source_query":"SELECT Region AS Rg, Country AS Ctr, ItemType AS ItmTyp, SalesChannel AS Slcl, OrderPriority AS Odpr, OrderDate AS Ordt, OrderID AS Orid , ShipDate AS Shpdt, UnitsSold AS Untsl, UnitPrice AS Untpr, UnitCost AS Untcst, TotalRevenue AS Ttlrv, TotalCost AS Ttlcs, TotalProfit AS Ttlprf, id as ID FROM source ORDER BY id",\n"source_primary_keys":"id",\n"target_table":"target",\n"target_query":"SELECT Region_T AS Rg, Country_T AS Ctr, ItemType_T AS ItmTyp, SalesChannel_T AS Slcl, OrderPriority_T AS Odpr, OrderDate_T AS Ordt, OrderID_T AS Orid , ShipDate_T AS Shpdt, UnitsSold_T AS Untsl, UnitPrice_T AS Untpr, UnitCost_T AS Untcst, TotalRevenue_T AS Ttlrv, TotalCost_T AS Ttlcs, TotalProfit_T AS Ttlprf, id_T as ID FROM target ORDER BY",\n"target_primary_keys":"id_T",\n"common_header":"Region, Country, ItemType, SalesChannel, OrderPriority, OrderDate, OrderID, ShipDate, UnitsSold, UnitPrice, UnitCost, TotalRevenue, TotalCost, TotalProfit, ID"\n}]""")
 		f.close()
 		print("mapping.json is created")
 	elif args.example == "jsrawreportcode":
