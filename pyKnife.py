@@ -1,4 +1,4 @@
-"""pyFork is for testing data in CSV format"""
+"""pyKnife is for running database to database comparison"""
 
 import pandas
 import time
@@ -312,6 +312,7 @@ class Testdb2db():
 					result[i][j] = str(result[i][j])
 
 			#set headers
+			Testdb2db._common_header = Testdb2db._common_header.replace(" ","") #no space in the header!
 			common_header_for_both = Testdb2db._common_header.split(",")
 			if len(common_header_for_both) == len(Testdb2db._source_data.columns) and len(common_header_for_both) == len(Testdb2db._target_data.columns):
 				#set source header
