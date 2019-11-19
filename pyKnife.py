@@ -7,6 +7,7 @@ import pyKnife
 import logger
 import csv
 import io
+import sqlite3
 from sqlalchemy import create_engine
 
 #Magic Methods
@@ -45,13 +46,18 @@ class Testdb2db():
 	_target_primary_keys = "";
 	_common_header = "";
 
-	_source_data = pandas.DataFrame();
-	_target_data = pandas.DataFrame();
+	_source_data = list()
+	_target_data = list()
+
+	_comparison_source_to_target = list()
+	_comparison_target_to_source = list()
 
 	_result_of_comparison = list();
 	_header_of_result_of_comparison = list();
 
 	_report_output_type = "";
+
+	_sqlite_connection = None
 
 	_found_bugs = list()
 
@@ -212,11 +218,8 @@ class Testdb2db():
 			db_connection = db_engine.connect()
 			output_data_from_db = db_connection.execute(Testdb2db._source_query)
 			Testdb2db._source_sql_statement = "";
-			Testdb2db._source_data = pandas.DataFrame(output_data_from_db.fetchall())
+			Testdb2db._source_data = output_data_from_db.fetchall()
 			db_connection.close()
-
-			Testdb2db._logger._info(Testdb2db._source_data.columns)
-			Testdb2db._logger._info(Testdb2db._source_data.head())
 			
 			Testdb2db._logger._info("Data is fetched from source database.");
 			Testdb2db._query_data_for_target()
@@ -235,21 +238,142 @@ class Testdb2db():
 			db_engine = create_engine(Testdb2db._target_connection_string)
 			db_connection = db_engine.connect()
 			output_data_from_db = db_connection.execute(Testdb2db._target_query)
-			Testdb2db._target_data = pandas.DataFrame(output_data_from_db.fetchall())
+			Testdb2db._target_data = output_data_from_db.fetchall()
 			db_connection.close()
-
-			Testdb2db._logger._info(Testdb2db._target_data.columns)
-			Testdb2db._logger._info(Testdb2db._target_data.head())
 			
-
 			Testdb2db._logger._info("Data is fetched from target database.");
-			Testdb2db._prepare_data_comparasion_result()
+			Testdb2db._data_loading_to_sqlite_memory()
 			return "0";
 		except Exception as e:
 			Testdb2db._logger._error("Error occurred! in '_query_data_for_target' -> "+str(e))
 			return "1";
 		pass
 
+
+	@classmethod
+	def _data_loading_to_sqlite_memory(cls) -> str:
+		"""_"""
+		try:
+			#set connection nothing
+			Testdb2db._sqlite_connection = None
+
+			#connect memory db
+			Testdb2db._sqlite_connection = sqlite3.connect(':memory:')
+			#Testdb2db._sqlite_connection = sqlite3.connect('/Users/th3h3d/Desktop/pyKnife/testdb.db')
+			
+			#Mr cursor
+			the_cursor = Testdb2db._sqlite_connection.cursor()
+
+			#create source table
+			source_table_string = Testdb2db._create_source_table()
+			Testdb2db._logger._info("Source table string is created: '{}'".format(source_table_string));
+			Testdb2db._sqlite_connection.execute(source_table_string)
+			Testdb2db._printerim("Source table is created in cache.")
+
+			#insert source data to memory
+			for itr_index1 in range(len(Testdb2db._source_data)):
+				Testdb2db._sqlite_connection.execute("INSERT INTO source_table VALUES {};".format(str(Testdb2db._source_data[itr_index1])))
+			Testdb2db._sqlite_connection.commit()
+			Testdb2db._printerim("Source data is loaded to cache.")
+
+
+
+			#create target table
+			target_table_string = Testdb2db._create_target_table()
+			Testdb2db._logger._info("Target table string is created: '{}'".format(target_table_string));
+			Testdb2db._sqlite_connection.execute(target_table_string)
+			Testdb2db._printerim("Target table is created in cache.")
+			
+			#insert target data to memory
+			for itr_index1 in range(len(Testdb2db._target_data)):
+				Testdb2db._sqlite_connection.execute("INSERT INTO target_table VALUES {};".format(str(Testdb2db._target_data[itr_index1])))
+			Testdb2db._sqlite_connection.commit()
+			Testdb2db._printerim("Target data is loaded to cache.")
+
+
+			#create comparesion queries
+			header = Testdb2db._common_header.split(",")
+
+			SQL_start = "SELECT ";
+			SQL_body = "";
+			SQL_end_source = " FROM source_table"
+			SQL_end_target = " FROM target_table"
+
+
+			for itr_index in range(len(header)):
+				SQL_body = SQL_body + header[itr_index] + ", "
+			SQL_body = SQL_body[:-2]
+			SQL_without_table = SQL_start+SQL_body
+
+			SQL_difference_from_source_to_target = SQL_without_table+SQL_end_source+" EXCEPT "+SQL_without_table+SQL_end_target
+			Testdb2db._logger._info("Comparesion query for source: '{}'".format(SQL_difference_from_source_to_target));
+
+			SQL_difference_from_target_to_source = SQL_without_table+SQL_end_target+" EXCEPT "+SQL_without_table+SQL_end_source
+			Testdb2db._logger._info("Comparesion query for target: '{}'".format(SQL_difference_from_target_to_source));
+
+
+			#fetch comparison results
+			the_cursor.execute(SQL_difference_from_source_to_target)
+			Testdb2db._comparison_source_to_target = the_cursor.fetchall()
+			Testdb2db._logger._info("Source to Target result: '{}'".format(Testdb2db._comparison_source_to_target));
+
+
+			the_cursor.execute(SQL_difference_from_target_to_source)
+			Testdb2db._comparison_target_to_source = the_cursor.fetchall()
+			Testdb2db._logger._info("Target to Source result: '{}'".format(Testdb2db._comparison_target_to_source));
+
+
+			Testdb2db._sqlite_connection.close()
+			return "0";
+		except Exception as e:
+			Testdb2db._logger._error("Error occurred! in '_data_loading_to_sqlite_memory' -> "+str(e))
+			return "1";
+		pass
+
+
+
+	@classmethod
+	def _create_source_table(cls,) -> str:
+		"""_"""
+		try:
+			header = Testdb2db._common_header.split(",")
+
+			SQL_start = """CREATE TABLE "source_table" (""";
+			SQL_body = "";
+			SQL_end = """);"""
+			for itr_index in range(len(header)):
+				SQL_body = SQL_body + header[itr_index] + " TEXT, "
+			SQL_body = SQL_body[:-2]
+
+			source_table_string = SQL_start+SQL_body+SQL_end
+
+			return source_table_string;
+
+		except Exception as e:
+			Testdb2db._logger._error("Error occurred! in '_create_source_table' -> "+str(e))
+			return "1";
+		pass
+
+	@classmethod
+	def _create_target_table(cls,) -> str:
+		"""_"""
+		try:
+			header = Testdb2db._common_header.split(",")
+
+			SQL_start = """CREATE TABLE "target_table" (""";
+			SQL_body = "";
+			SQL_end = """);"""
+			for itr_index in range(len(header)):
+				SQL_body = SQL_body + header[itr_index] + " TEXT, "
+			SQL_body = SQL_body[:-2]
+
+			target_table_string = SQL_start+SQL_body+SQL_end
+
+			return target_table_string;
+		except Exception as e:
+			Testdb2db._logger._error("Error occurred! in '_create_target_table' -> "+str(e))
+			return "1";
+		pass
 
 	@classmethod
 	def _prepare_data_comparasion_result(cls) -> str:
