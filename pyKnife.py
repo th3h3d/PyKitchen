@@ -21,8 +21,6 @@ __all__ = []
 
 class Testdb2db():
 	"""-"""
-	_passed = 0
-	_failed = 0
 
 	_logger = logger.Logger();
 
@@ -40,17 +38,15 @@ class Testdb2db():
 	_case = "";
 	_source_table = "";
 	_source_query = "";
-	_source_primary_keys = "";
 	_target_table = "";
 	_target_query = "";
-	_target_primary_keys = "";
+	_common_primary_keys = "";
 	_common_header = "";
 
-	_source_data = list()
-	_target_data = list()
+	_source_data = pandas.DataFrame();
+	_target_data = pandas.DataFrame();
 
 	_comparison_source_to_target = list()
-	_comparison_target_to_source = list()
 
 	_result_of_comparison = list();
 	_header_of_result_of_comparison = list();
@@ -58,8 +54,6 @@ class Testdb2db():
 	_report_output_type = "";
 
 	_sqlite_connection = None
-
-	_found_bugs = list()
 
 	def __init__(self):
 		"""Set mandatory input.
@@ -144,7 +138,7 @@ class Testdb2db():
 	def _validation_of_mapping(cls) -> str:
 		"""_"""
 		try:
-			mapping_header = ['case','source_table','source_query','source_primary_keys','target_table','target_query','target_primary_keys','common_header']
+			mapping_header = ['case','source_table','source_query','target_table','target_query','_common_primary_keys','common_header']
 			mapping_header_from_file = list(Testdb2db._data_frame_mapping.columns)
 
 			for itr_index in range(len(mapping_header)):
@@ -193,11 +187,12 @@ class Testdb2db():
 				Testdb2db._printerim("Case {} is being iterated.".format(Testdb2db._case))
 				Testdb2db._source_table = Testdb2db._data_frame_mapping['source_table'][itr_index];
 				Testdb2db._source_query = Testdb2db._data_frame_mapping['source_query'][itr_index];
-				Testdb2db._source_primary_keys = Testdb2db._data_frame_mapping['source_primary_keys'][itr_index];
 				Testdb2db._target_table = Testdb2db._data_frame_mapping['target_table'][itr_index];
 				Testdb2db._target_query = Testdb2db._data_frame_mapping['target_query'][itr_index];
-				Testdb2db._target_primary_keys = Testdb2db._data_frame_mapping['target_primary_keys'][itr_index];
+				Testdb2db.__common_primary_keys = Testdb2db._data_frame_mapping['_common_primary_keys'][itr_index];
+				Testdb2db.__common_primary_keys = Testdb2db.__common_primary_keys.replace(" ","");
 				Testdb2db._common_header = Testdb2db._data_frame_mapping['common_header'][itr_index];
+				Testdb2db._common_header = Testdb2db._common_header.replace(" ",""); #space is not acceptable for defined header
 				Testdb2db._logger._info("Variable setting is successfully finished for case {}".format(itr_index))
 				Testdb2db._logger._info("Variable setting and iteration is successfully finised for mapping data.");
 				Testdb2db._query_data_for_source();
@@ -218,7 +213,8 @@ class Testdb2db():
 			db_connection = db_engine.connect()
 			output_data_from_db = db_connection.execute(Testdb2db._source_query)
 			Testdb2db._source_sql_statement = "";
-			Testdb2db._source_data = output_data_from_db.fetchall()
+			Testdb2db._source_data = pandas.DataFrame(output_data_from_db.fetchall());
+			Testdb2db._source_data = Testdb2db._source_data.applymap(str);
 			db_connection.close()
 			
 			Testdb2db._logger._info("Data is fetched from source database.");
@@ -238,11 +234,12 @@ class Testdb2db():
 			db_engine = create_engine(Testdb2db._target_connection_string)
 			db_connection = db_engine.connect()
 			output_data_from_db = db_connection.execute(Testdb2db._target_query)
-			Testdb2db._target_data = output_data_from_db.fetchall()
+			Testdb2db._target_data =pandas.DataFrame( output_data_from_db.fetchall());
+			Testdb2db._target_data = Testdb2db._target_data.applymap(str);
 			db_connection.close()
 			
 			Testdb2db._logger._info("Data is fetched from target database.");
-			Testdb2db._data_loading_to_sqlite_memory()
+			Testdb2db._data_comparison()
 			return "0";
 		except Exception as e:
 			Testdb2db._logger._error("Error occurred! in '_query_data_for_target' -> "+str(e))
@@ -251,7 +248,7 @@ class Testdb2db():
 
 
 	@classmethod
-	def _data_loading_to_sqlite_memory(cls) -> str:
+	def _data_comparison(cls) -> str:
 		"""_"""
 		try:
 			#set connection nothing
@@ -259,34 +256,39 @@ class Testdb2db():
 
 			#connect memory db
 			Testdb2db._sqlite_connection = sqlite3.connect(':memory:')
-			#Testdb2db._sqlite_connection = sqlite3.connect('/Users/th3h3d/Desktop/pyKnife/testdb.db')
+			#Testdb2db._sqlite_connection = sqlite3.connect("\\testdb.db")
 			
 			#Mr cursor
 			the_cursor = Testdb2db._sqlite_connection.cursor()
 
+
+
 			#create source table
-			source_table_string = Testdb2db._create_source_table()
+			source_table_string = Testdb2db._create_table_in_memory("source_table")
 			Testdb2db._logger._info("Source table string is created: '{}'".format(source_table_string));
 			Testdb2db._sqlite_connection.execute(source_table_string)
 			Testdb2db._printerim("Source table is created in cache.")
 
+
 			#insert source data to memory
-			for itr_index1 in range(len(Testdb2db._source_data)):
-				Testdb2db._sqlite_connection.execute("INSERT INTO source_table VALUES {};".format(str(Testdb2db._source_data[itr_index1])))
+			source_data_with_list_form = Testdb2db._source_data.values.tolist() #convert dataframe to python list (array)
+			for itr_index1 in range(len(source_data_with_list_form)):
+				Testdb2db._sqlite_connection.execute("INSERT INTO source_table VALUES {};".format(str(source_data_with_list_form[itr_index1]).replace("[","(").replace("]",")")))
 			Testdb2db._sqlite_connection.commit()
 			Testdb2db._printerim("Source data is loaded to cache.")
 
 
 
 			#create target table
-			target_table_string = Testdb2db._create_target_table()
+			target_table_string = Testdb2db._create_table_in_memory("target_table")
 			Testdb2db._logger._info("Target table string is created: '{}'".format(target_table_string));
 			Testdb2db._sqlite_connection.execute(target_table_string)
 			Testdb2db._printerim("Target table is created in cache.")
 			
 			#insert target data to memory
-			for itr_index1 in range(len(Testdb2db._target_data)):
-				Testdb2db._sqlite_connection.execute("INSERT INTO target_table VALUES {};".format(str(Testdb2db._target_data[itr_index1])))
+			target_data_with_list_form = Testdb2db._target_data.values.tolist() #convert dataframe to python list (array)
+			for itr_index1 in range(len(target_data_with_list_form)):
+				Testdb2db._sqlite_connection.execute("INSERT INTO target_table VALUES {};".format(str(target_data_with_list_form[itr_index1]).replace("[","(").replace("]",")")))
 			Testdb2db._sqlite_connection.commit()
 			Testdb2db._printerim("Target data is loaded to cache.")
 
@@ -296,175 +298,113 @@ class Testdb2db():
 
 			SQL_start = "SELECT ";
 			SQL_body = "";
-			SQL_end_source = " FROM source_table"
-			SQL_end_target = " FROM target_table"
+			SQL_end_source = " FROM source_table";
+			SQL_end_target = " FROM target_table";
 
 
 			for itr_index in range(len(header)):
-				SQL_body = SQL_body + header[itr_index] + ", "
-			SQL_body = SQL_body[:-2]
-			SQL_without_table = SQL_start+SQL_body
+				SQL_body = SQL_body + header[itr_index] + ", ";
+			SQL_body = SQL_body[:-2];
+			SQL_without_table = SQL_start+SQL_body;
+
 
 			SQL_difference_from_source_to_target = SQL_without_table+SQL_end_source+" EXCEPT "+SQL_without_table+SQL_end_target
 			Testdb2db._logger._info("Comparesion query for source: '{}'".format(SQL_difference_from_source_to_target));
 
-			SQL_difference_from_target_to_source = SQL_without_table+SQL_end_target+" EXCEPT "+SQL_without_table+SQL_end_source
-			Testdb2db._logger._info("Comparesion query for target: '{}'".format(SQL_difference_from_target_to_source));
-
+			Testdb2db._printerim("Data is being compared.")
 
 			#fetch comparison results
 			the_cursor.execute(SQL_difference_from_source_to_target)
 			Testdb2db._comparison_source_to_target = the_cursor.fetchall()
-			Testdb2db._logger._info("Source to Target result: '{}'".format(Testdb2db._comparison_source_to_target));
+			#Source EXCEPT Target:
+				# gives rows which are in source but not in target
+				# gives rows which are in source and target but stored wrongly in target (mismatch)
 
 
-			the_cursor.execute(SQL_difference_from_target_to_source)
-			Testdb2db._comparison_target_to_source = the_cursor.fetchall()
-			Testdb2db._logger._info("Target to Source result: '{}'".format(Testdb2db._comparison_target_to_source));
+			primary_key = Testdb2db.__common_primary_keys.split(",");
+			
+			primary_key_index = list()
+			for itr_index in range(len(primary_key)):
+				primary_key_index.append(header.index(primary_key[itr_index]))
 
+			result = list();
+			except_result = Testdb2db._comparison_source_to_target;
+			for itr_index1 in range(len(except_result)):
+				counter_SQL = "SELECT count(*) from target_table WHERE ";
+				target_fetcher_SQL = "SELECT * from target_table WHERE ";
+				for itr_index2 in range(len(primary_key)):
+					after_where_clause = ""
+					after_where_clause = primary_key[itr_index2] + " = " + except_result[itr_index1][primary_key_index[itr_index2]] + " and ";
+					counter_SQL = counter_SQL + after_where_clause;
+					target_fetcher_SQL = target_fetcher_SQL + after_where_clause;
+				counter_SQL = counter_SQL[:-4];
+				target_fetcher_SQL = target_fetcher_SQL[:-4];
 
-			Testdb2db._sqlite_connection.close()
-			return "0";
-		except Exception as e:
-			Testdb2db._logger._error("Error occurred! in '_data_loading_to_sqlite_memory' -> "+str(e))
-			return "1";
-		pass
+				Testdb2db._printerim("Report is being prepared.")
 
-
-
-	@classmethod
-	def _create_source_table(cls,) -> str:
-		"""_"""
-		try:
-			header = Testdb2db._common_header.split(",")
-
-			SQL_start = """CREATE TABLE "source_table" (""";
-			SQL_body = "";
-			SQL_end = """);"""
-			for itr_index in range(len(header)):
-				SQL_body = SQL_body + header[itr_index] + " TEXT, "
-			SQL_body = SQL_body[:-2]
-
-			source_table_string = SQL_start+SQL_body+SQL_end
-
-			return source_table_string;
-
-		except Exception as e:
-			Testdb2db._logger._error("Error occurred! in '_create_source_table' -> "+str(e))
-			return "1";
-		pass
-
-	@classmethod
-	def _create_target_table(cls,) -> str:
-		"""_"""
-		try:
-			header = Testdb2db._common_header.split(",")
-
-			SQL_start = """CREATE TABLE "target_table" (""";
-			SQL_body = "";
-			SQL_end = """);"""
-			for itr_index in range(len(header)):
-				SQL_body = SQL_body + header[itr_index] + " TEXT, "
-			SQL_body = SQL_body[:-2]
-
-			target_table_string = SQL_start+SQL_body+SQL_end
-
-			return target_table_string;
-		except Exception as e:
-			Testdb2db._logger._error("Error occurred! in '_create_target_table' -> "+str(e))
-			return "1";
-		pass
-
-	@classmethod
-	def _prepare_data_comparasion_result(cls) -> str:
-		"""_"""
-		try:
-			Testdb2db._printerim("Data is being compared.")
-			result = list()
-			header = list()
-			make_dict = {"source":Testdb2db._source_data, "target":Testdb2db._target_data}
-			make_concat = pandas.concat(make_dict)
-			make_concat.drop_duplicates(keep=False)
-
-			df_gpby = make_concat.groupby(list(make_concat.columns))
-			new_index = [x[0] for x in df_gpby.groups.values() if len(x) == 1]
-			new_dataframe = make_concat.reindex(new_index)
-
-			source = list()
-			target = list()
-
-			for i in range(len(new_index)):
-				if new_index[i][0] == 'source':
-					source.append(new_index[i])
-				else:
-					target.append(new_index[i])
-
-			for i in range(len(target)):
-				flag = 0;
-				for j in range(len(source)):
-					if target[i][1] == source[j][1]:
-						flag = 1;
-						source_and_target = list()
-						all_target = new_dataframe.loc[target[i][0]]
-						target_row = list(all_target.loc[ target[i][1] , : ])
-						target_row.insert(0,"Target")
-						source_and_target = list()
-						all_source = new_dataframe.loc[source[j][0]]
-						source_row = list(all_source.loc[ source[j][1] , : ])
-						source_row.insert(0,"Source")
-						source_and_target.extend(source_row)                
-						source_and_target.extend(target_row)
-						result.append(source_and_target)
-					else:
-						pass
-				if flag == 0:
+				the_cursor.execute(counter_SQL)
+				count_result = the_cursor.fetchall()
+				if count_result[0][0] == 0: #insert not found values
 					source_and_target = list()
-					all_target = new_dataframe.loc[target[i][0]]
-					target_row = list(all_target.loc[ target[i][1] , : ])
-					target_row.insert(0,"Target")
+
 					source_row = list()
 					source_row.insert(0,"Source")
-					for walk in range(len(target_row)-1):
-						source_row.append("Not Found")
+					for walk in range(len(except_result[itr_index1])):
+						source_row.append(except_result[itr_index1][walk])
+
+					target_row = list()
+					target_row.insert(0,"Target")
+					for walk in range(len(except_result[itr_index1])):
+						target_row.append("Not Found")
+
 					source_and_target.extend(source_row)
 					source_and_target.extend(target_row)
 					result.append(source_and_target)
-					
-			#set all data to string type
-			for i in range(len(result)):
-				for j in range(len(result[i])):
-					result[i][j] = str(result[i][j])
 
-			#set headers
-			Testdb2db._common_header = Testdb2db._common_header.replace(" ","") #no space in the header!
-			common_header_for_both = Testdb2db._common_header.split(",")
-			if len(common_header_for_both) == len(Testdb2db._source_data.columns) and len(common_header_for_both) == len(Testdb2db._target_data.columns):
-				#set source header
-				header.append("System")
-				for itr_index in range(len(common_header_for_both)):
-					header.append(common_header_for_both[itr_index])
-				#set target header
-				header.append("System")
-				for itr_index in range(len(common_header_for_both)):
-					header.append(common_header_for_both[itr_index])
-			else:
-				Testdb2db._logger._error("Error occurred! Either source or target column length (source: {}, target: {}) does not match with defined common headers (common header: {})".format(len(Testdb2db._source_data.columns),len(Testdb2db._target_data.columns),len(common_header_for_both)))
-				return "1";
+				else:#insert not found values
+					source_and_target = list()
 
-			Testdb2db._header_of_result_of_comparison = str(header);
-			Testdb2db._logger._info("Data header: {}".format(Testdb2db._header_of_result_of_comparison));
+					source_row = list()
+					source_row.insert(0,"Source")
+					for walk in range(len(except_result[itr_index1])):
+						source_row.append(except_result[itr_index1][walk])
 
+					target_row = list()
+					target_row.insert(0,"Target")
+
+					#if value is found, fetch row from target table
+					the_cursor.execute(target_fetcher_SQL)
+					returned_data_from_target_table = the_cursor.fetchall()
+
+					for walk in range(len(returned_data_from_target_table[0])):
+						target_row.append(returned_data_from_target_table[0][walk])
+
+					source_and_target.extend(source_row)
+					source_and_target.extend(target_row)
+					result.append(source_and_target)
+
+			header_for_report = list();
+			#set source header
+			header_for_report.append("System")
+			for itr_index in range(len(header)):
+				header_for_report.append(header[itr_index])
+			#set target header
+			header_for_report.append("System")
+			for itr_index in range(len(header)):
+				header_for_report.append(header[itr_index])
+
+			Testdb2db._logger._info("Data header: {}".format(header_for_report));
+			Testdb2db._header_of_result_of_comparison = str(header_for_report);
+
+			Testdb2db._logger._info("Data unmatched data length: {}".format(len(result)));
 			Testdb2db._result_of_comparison = str(result);
-			Testdb2db._logger._info("Data unmatched data: {}".format(Testdb2db._result_of_comparison));
 
-			Testdb2db._logger._info("Data comparasion result is prepared.");
 
 			#if there is no unmatched data, stop right here
 			if len(result) == 0:
 				Testdb2db._printerim("All data is matched!")
 				Testdb2db._printerim("Report is NOT printed!")
 				return "0";				
-
 
 			#output file method calls happen here.
 			if Testdb2db._report_output_type == "javascript":
@@ -475,9 +415,34 @@ class Testdb2db():
 				Testdb2db._logger._error("Output type '{}' is not chosen!".format(Testdb2db._report_output_type))
 				return "1";
 
+			Testdb2db._sqlite_connection.close()
 			return "0";
 		except Exception as e:
-			Testdb2db._logger._error("Error occurred! in '_prepare_data_comparasion_result' -> "+str(e))
+			Testdb2db._logger._error("Error occurred! in '_data_comparison' -> "+str(e))
+			Testdb2db._sqlite_connection.close()
+			return "1";
+		pass
+
+
+	@classmethod
+	def _create_table_in_memory(cls,table_name) -> str:
+		"""_"""
+		try:
+			header = Testdb2db._common_header.split(",")
+
+			SQL_start = """CREATE TABLE "{}" (""".format(table_name);
+			SQL_body = "";
+			SQL_end = """);""";
+			for itr_index in range(len(header)):
+				SQL_body = SQL_body + header[itr_index] + " TEXT, ";
+			SQL_body = SQL_body[:-2]
+
+			source_table_string = SQL_start+SQL_body+SQL_end
+
+			return source_table_string;
+
+		except Exception as e:
+			Testdb2db._logger._error("Error occurred! in '_create_table_in_memory' -> "+str(e))
 			return "1";
 		pass
 
@@ -489,14 +454,14 @@ class Testdb2db():
 			Testdb2db._printerim("HTML report is being generated.")
 			source_sql_statement = '';
 			for i in range(len(Testdb2db._source_query)):
-				if i % 60 == 0 and i != 0:
+				if i % 150 == 0 and i != 0:
 					source_sql_statement = source_sql_statement + str(Testdb2db._source_query[i]) + "\\n";
 				else:
 					source_sql_statement = source_sql_statement + str(Testdb2db._source_query[i])
 
 			target_sql_statement = '';
 			for i in range(len(Testdb2db._target_query)):
-				if i % 60 == 0 and i != 0:
+				if i % 150 == 0 and i != 0:
 					target_sql_statement = target_sql_statement + str(Testdb2db._target_query[i]) + "\\n";
 				else:
 					target_sql_statement = target_sql_statement + str(Testdb2db._target_query[i])
@@ -585,7 +550,7 @@ def runner(args):
 		print("connection.json is created")
 	elif args.example == "mapping":
 		f = open("mapping1.json","w")
-		f.write("""[{\n"case":"1",\n"source_table":"source",\n"source_query":"SELECT Region AS Rg, Country AS Ctr, ItemType AS ItmTyp, SalesChannel AS Slcl, OrderPriority AS Odpr, OrderDate AS Ordt, OrderID AS Orid , ShipDate AS Shpdt, UnitsSold AS Untsl, UnitPrice AS Untpr, UnitCost AS Untcst, TotalRevenue AS Ttlrv, TotalCost AS Ttlcs, TotalProfit AS Ttlprf, id as ID FROM source ORDER BY id",\n"source_primary_keys":"id",\n"target_table":"target",\n"target_query":"SELECT Region_T AS Rg, Country_T AS Ctr, ItemType_T AS ItmTyp, SalesChannel_T AS Slcl, OrderPriority_T AS Odpr, OrderDate_T AS Ordt, OrderID_T AS Orid , ShipDate_T AS Shpdt, UnitsSold_T AS Untsl, UnitPrice_T AS Untpr, UnitCost_T AS Untcst, TotalRevenue_T AS Ttlrv, TotalCost_T AS Ttlcs, TotalProfit_T AS Ttlprf, id_T as ID FROM target ORDER BY",\n"target_primary_keys":"id_T",\n"common_header":"Region, Country, ItemType, SalesChannel, OrderPriority, OrderDate, OrderID, ShipDate, UnitsSold, UnitPrice, UnitCost, TotalRevenue, TotalCost, TotalProfit, ID"\n}]""")
+		f.write("""[{\n"case":"1",\n"source_table":"source",\n"source_query":"SELECT Region AS Rg, Country AS Ctr, ItemType AS ItmTyp, SalesChannel AS Slcl, OrderPriority AS Odpr, OrderDate AS Ordt, OrderID AS Orid , ShipDate AS Shpdt, UnitsSold AS Untsl, UnitPrice AS Untpr, UnitCost AS Untcst, TotalRevenue AS Ttlrv, TotalCost AS Ttlcs, TotalProfit AS Ttlprf, id as ID FROM source ORDER BY id",\n"target_table":"target",\n"target_query":"SELECT Region_T AS Rg, Country_T AS Ctr, ItemType_T AS ItmTyp, SalesChannel_T AS Slcl, OrderPriority_T AS Odpr, OrderDate_T AS Ordt, OrderID_T AS Orid , ShipDate_T AS Shpdt, UnitsSold_T AS Untsl, UnitPrice_T AS Untpr, UnitCost_T AS Untcst, TotalRevenue_T AS Ttlrv, TotalCost_T AS Ttlcs, TotalProfit_T AS Ttlprf, id_T as ID FROM target ORDER BY",\n"common_primary_keys":"id_T",\n"common_header":"Region, Country, ItemType, SalesChannel, OrderPriority, OrderDate, OrderID, ShipDate, UnitsSold, UnitPrice, UnitCost, TotalRevenue, TotalCost, TotalProfit, ID"\n}]""")
 		f.close()
 		print("mapping.json is created")
 	elif args.example == "jsrawreportcode":
