@@ -1,5 +1,7 @@
 """pyKnife is for running database to database comparison"""
 
+import os
+import sys
 import pandas
 import time
 import argparse
@@ -9,6 +11,7 @@ import csv
 import io
 import sqlite3
 from sqlalchemy import create_engine
+
 
 #Magic Methods
 __version__ = '1.0'
@@ -251,17 +254,15 @@ class Testdb2db():
 	def _data_comparison(cls) -> str:
 		"""_"""
 		try:
-			#set connection nothing
+			#set connection to nothing
 			Testdb2db._sqlite_connection = None
 
 			#connect memory db
 			Testdb2db._sqlite_connection = sqlite3.connect(':memory:')
 			#Testdb2db._sqlite_connection = sqlite3.connect("\\testdb.db")
 			
-			#Mr cursor
+			#create Mr cursor
 			the_cursor = Testdb2db._sqlite_connection.cursor()
-
-
 
 			#create source table
 			source_table_string = Testdb2db._create_table_in_memory("source_table")
@@ -269,15 +270,12 @@ class Testdb2db():
 			Testdb2db._sqlite_connection.execute(source_table_string)
 			Testdb2db._printerim("Source table is created in cache.")
 
-
 			#insert source data to memory
 			source_data_with_list_form = Testdb2db._source_data.values.tolist() #convert dataframe to python list (array)
 			for itr_index1 in range(len(source_data_with_list_form)):
 				Testdb2db._sqlite_connection.execute("INSERT INTO source_table VALUES {};".format(str(source_data_with_list_form[itr_index1]).replace("[","(").replace("]",")")))
 			Testdb2db._sqlite_connection.commit()
 			Testdb2db._printerim("Source data is loaded to cache.")
-
-
 
 			#create target table
 			target_table_string = Testdb2db._create_table_in_memory("target_table")
@@ -292,7 +290,6 @@ class Testdb2db():
 			Testdb2db._sqlite_connection.commit()
 			Testdb2db._printerim("Target data is loaded to cache.")
 
-
 			#create comparesion queries
 			header = Testdb2db._common_header.split(",")
 
@@ -301,49 +298,58 @@ class Testdb2db():
 			SQL_end_source = " FROM source_table";
 			SQL_end_target = " FROM target_table";
 
-
 			for itr_index in range(len(header)):
 				SQL_body = SQL_body + header[itr_index] + ", ";
 			SQL_body = SQL_body[:-2];
 			SQL_without_table = SQL_start+SQL_body;
 
-
 			SQL_difference_from_source_to_target = SQL_without_table+SQL_end_source+" EXCEPT "+SQL_without_table+SQL_end_target
-			Testdb2db._logger._info("Comparesion query for source: '{}'".format(SQL_difference_from_source_to_target));
-
-			Testdb2db._printerim("Data is being compared.")
+			Testdb2db._logger._info("Comparesion query for source to target: '{}'".format(SQL_difference_from_source_to_target));
 
 			#fetch comparison results
-			the_cursor.execute(SQL_difference_from_source_to_target)
-			Testdb2db._comparison_source_to_target = the_cursor.fetchall()
 			#Source EXCEPT Target:
 				# gives rows which are in source but not in target
 				# gives rows which are in source and target but stored wrongly in target (mismatch)
+			Testdb2db._printerim("Data is being compared.")
+			the_cursor.execute(SQL_difference_from_source_to_target)
+			Testdb2db._comparison_source_to_target = the_cursor.fetchall()
 
 
+			#start processing data
 			primary_key = Testdb2db.__common_primary_keys.split(",");
 			
 			primary_key_index = list()
 			for itr_index in range(len(primary_key)):
 				primary_key_index.append(header.index(primary_key[itr_index]))
 
-			Testdb2db._printerim("Report is being prepared.")
+			Testdb2db._printerim("Unmatched data is being caught.")
 			result = list();
 			except_result = Testdb2db._comparison_source_to_target;
+			Testdb2db._printerim("Unmatched data amount: '{}' (~1000 rows are checked in ~1 second).".format(len(except_result)))
+
 			for itr_index1 in range(len(except_result)):
-				counter_SQL = "SELECT count(*) from target_table WHERE ";
-				target_fetcher_SQL = "SELECT * from target_table WHERE ";
+				#print info on the screen
+				calculation = ((itr_index1+1)/len(except_result))*100
+				sys.stdout.write("\r-- Total Unmatched Row(s):["+str(len(except_result))+"]  |  Processed Row(s): [%d"%(itr_index1+1)+"]  | ~%d"%(calculation)+"% Completed...")
+				sys.stdout.flush()
+
+				#prepare SQL statments
+				counter_SQL = "SELECT count(*) FROM target_table WHERE ";
+				target_fetcher_SQL = "SELECT * FROM target_table WHERE ";
 				for itr_index2 in range(len(primary_key)):
 					after_where_clause = ""
-					after_where_clause = primary_key[itr_index2] + " = " + except_result[itr_index1][primary_key_index[itr_index2]] + " and ";
+					after_where_clause = primary_key[itr_index2] + " = '" + except_result[itr_index1][primary_key_index[itr_index2]] + "' AND ";
 					counter_SQL = counter_SQL + after_where_clause;
 					target_fetcher_SQL = target_fetcher_SQL + after_where_clause;
 				counter_SQL = counter_SQL[:-4];
 				target_fetcher_SQL = target_fetcher_SQL[:-4];
 
+				#execute SQL statment against target table
 				the_cursor.execute(counter_SQL)
 				count_result = the_cursor.fetchall()
-				if count_result[0][0] == 0: #insert not found values
+
+				#insert source "itself", insert target "not found".
+				if count_result[0][0] == 0: 
 					source_and_target = list()
 
 					source_row = list()
@@ -358,9 +364,10 @@ class Testdb2db():
 
 					source_and_target.extend(source_row)
 					source_and_target.extend(target_row)
-					result.append(source_and_target)
+					result.append(source_and_target)					
 
-				else:#insert not found values
+				#insert source and target
+				else:
 					source_and_target = list()
 
 					source_row = list()
@@ -382,6 +389,7 @@ class Testdb2db():
 					source_and_target.extend(target_row)
 					result.append(source_and_target)
 
+			Testdb2db._printerim("Report header is being prepared.")
 			header_for_report = list();
 			#set source header
 			header_for_report.append("System")
