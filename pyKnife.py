@@ -189,7 +189,7 @@ class Testdb2db():
 				Testdb2db._source_query = Testdb2db._data_frame_mapping['source_query'][itr_index];
 				Testdb2db._target_table = Testdb2db._data_frame_mapping['target_table'][itr_index];
 				Testdb2db._target_query = Testdb2db._data_frame_mapping['target_query'][itr_index];
-				Testdb2db.__common_primary_keys = Testdb2db._data_frame_mapping['_common_primary_keys'][itr_index];
+				Testdb2db.__common_primary_keys = Testdb2db._data_frame_mapping['common_primary_keys'][itr_index];
 				Testdb2db.__common_primary_keys = Testdb2db.__common_primary_keys.replace(" ","");
 				Testdb2db._common_header = Testdb2db._data_frame_mapping['common_header'][itr_index];
 				Testdb2db._common_header = Testdb2db._common_header.replace(" ",""); #space is not acceptable for defined header
@@ -327,6 +327,7 @@ class Testdb2db():
 			for itr_index in range(len(primary_key)):
 				primary_key_index.append(header.index(primary_key[itr_index]))
 
+			Testdb2db._printerim("Report is being prepared.")
 			result = list();
 			except_result = Testdb2db._comparison_source_to_target;
 			for itr_index1 in range(len(except_result)):
@@ -339,8 +340,6 @@ class Testdb2db():
 					target_fetcher_SQL = target_fetcher_SQL + after_where_clause;
 				counter_SQL = counter_SQL[:-4];
 				target_fetcher_SQL = target_fetcher_SQL[:-4];
-
-				Testdb2db._printerim("Report is being prepared.")
 
 				the_cursor.execute(counter_SQL)
 				count_result = the_cursor.fetchall()
