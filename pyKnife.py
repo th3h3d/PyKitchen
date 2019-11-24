@@ -56,6 +56,8 @@ class Testdb2db():
 
 	_report_output_type = "";
 
+	_onlyexist = "";
+
 	_sqlite_connection = None
 
 	def __init__(self):
@@ -349,7 +351,7 @@ class Testdb2db():
 				count_result = the_cursor.fetchall()
 
 				#insert source "itself", insert target "not found".
-				if count_result[0][0] == 0: 
+				if count_result[0][0] == 0 and Testdb2db._onlyexist.upper() == 'NO': 
 					source_and_target = list()
 
 					source_row = list()
@@ -528,7 +530,7 @@ class Testdb2db():
 		pass
 
 	@classmethod
-	def master_method(cls, json_connection_file_name, output_type) -> str:
+	def master_method(cls, json_connection_file_name, output_type, onlyexist) -> str:
 		"""Master method, where class methods are called"""
 		try:
 			Testdb2db._connection_file_name = json_connection_file_name;
@@ -567,18 +569,20 @@ def runner(args):
 		print("rawreportcode.txt is created")
 	else:
 		test_agent = pyKnife.Testdb2db()
-		test_agent.master_method(args.connection, args.output)
+		test_agent.master_method(args.connection, args.output, args.onlyexist)
 
 
 def main():
 	"""User Interface for console"""
 	my_parser = argparse.ArgumentParser()
 
-	my_parser.add_argument('--connection', type=str, help="Provide your mapping file, Example: 'connection.json'")
+	my_parser.add_argument('--connection', type=str, help="Provide your connection file, Example: '--connection connection.json' (works with output and onlyexist) (no default)")
 
-	my_parser.add_argument('--example', type=str, help="Provide your example opetion, Example: 'connection' or 'mapping' or 'rawreportcode'")
+	my_parser.add_argument('--example', type=str, help="Choose your example option, Example: '--example connection/mapping/awreportcode' (works alone) (no default)")
 
-	my_parser.add_argument('--output', type=str, help="Provide your output file type (p.s. csv is buggy currently), Example 'javascript' or 'csv'")
+	my_parser.add_argument('--output', type=str, help="Choose your output file type, Example: '--output javascript/csv' (works with connection and output) (no default)")
+
+	my_parser.add_argument('--onlyexist', type=str, help="Only exist data will be printed in the report, Example '--onlyexist yes/no' (works with connection and output) (yes default 'no')", default="no")
 
 
 	args = my_parser.parse_args()
