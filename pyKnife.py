@@ -535,6 +535,7 @@ class Testdb2db():
 		try:
 			Testdb2db._connection_file_name = json_connection_file_name;
 			Testdb2db._report_output_type = output_type;
+			Testdb2db._onlyexist = onlyexist;
 			Testdb2db._printerim("Script started.")
 			if Testdb2db._connection_file_name != "" and Testdb2db._report_output_type != "":
 				Testdb2db._read_json_connection();
