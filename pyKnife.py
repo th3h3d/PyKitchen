@@ -369,7 +369,7 @@ class Testdb2db():
 					result.append(source_and_target)					
 
 				#insert source and target
-				else:
+				elif count_result[0][0] == 1:
 					source_and_target = list()
 
 					source_row = list()
@@ -390,6 +390,8 @@ class Testdb2db():
 					source_and_target.extend(source_row)
 					source_and_target.extend(target_row)
 					result.append(source_and_target)
+				else:
+					pass
 
 			Testdb2db._printerim("Report header is being prepared.")
 			header_for_report = list();
