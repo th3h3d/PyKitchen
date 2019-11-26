@@ -10,7 +10,9 @@ import logger
 import csv
 import io
 import sqlite3
+import warnings
 from sqlalchemy import create_engine
+from sqlalchemy import exc as sa_exc
 
 
 #Magic Methods
@@ -57,6 +59,7 @@ class Testdb2db():
 	_report_output_type = "";
 
 	_onlyexist = "";
+	_onlyonecase = "";
 
 	_sqlite_connection = None
 
@@ -175,7 +178,13 @@ class Testdb2db():
 
 			
 			Testdb2db._logger._info("Variable setting is successfully finised for connection data.");
-			Testdb2db._set_data_with_iteration();
+
+			#decide iteration type
+			if Testdb2db._onlyonecase.upper() == 'ALL' :
+				Testdb2db._set_data_with_iterations();
+			else:
+				Testdb2db._set_data_with_one_iteration()
+
 			return "0";
 		except Exception as e:
 			Testdb2db._logger._error("Error occurred! in '_variable_setting_connection' -> "+str(e))
@@ -183,7 +192,7 @@ class Testdb2db():
 		pass
 
 	@classmethod
-	def _set_data_with_iteration(cls) -> str:
+	def _set_data_with_iterations(cls) -> str:
 		"""_"""
 		try:
 			Testdb2db._printerim("{} iteration(s) are detected.".format(len(Testdb2db._data_frame_mapping)))
@@ -200,12 +209,52 @@ class Testdb2db():
 				Testdb2db._common_header = Testdb2db._common_header.replace(" ",""); #space is not acceptable for defined header
 				Testdb2db._logger._info("Variable setting is successfully finished for case {}".format(itr_index))
 				Testdb2db._logger._info("Variable setting and iteration is successfully finised for mapping data.");
-				Testdb2db._query_data_for_source();
-				Testdb2db._printerim("Case {} is completed.\n".format(Testdb2db._case))
+
+				with warnings.catch_warnings():
+					warnings.simplefilter("ignore", category=sa_exc.SAWarning) #turn off additional warnings on the screen!
+					Testdb2db._query_data_for_source();
+					Testdb2db._printerim("Case {} is completed.\n".format(Testdb2db._case))
+
 
 			return "0";
 		except Exception as e:
-			Testdb2db._logger._error("Error occurred! in '_set_data_with_iteration' -> "+str(e))
+			Testdb2db._logger._error("Error occurred! in '_set_data_with_iterations' -> "+str(e))
+			return "1";
+		pass
+
+
+	@classmethod
+	def _set_data_with_one_iteration(cls) -> str:
+		"""_"""
+		try:
+			Testdb2db._printerim("{} iteration(s) are detected.".format(len(Testdb2db._data_frame_mapping)))
+			Testdb2db._printerim("Case number '{}' will be executed only.".format(Testdb2db._onlyonecase))
+			for itr_index in range(len(Testdb2db._data_frame_mapping)):
+				if Testdb2db._data_frame_mapping['case'][itr_index] == str(Testdb2db._onlyonecase):
+					Testdb2db._case = Testdb2db._data_frame_mapping['case'][itr_index];
+					Testdb2db._printerim("Case {} is being iterated.".format(Testdb2db._case))
+					Testdb2db._source_table = Testdb2db._data_frame_mapping['source_table'][itr_index];
+					Testdb2db._source_query = Testdb2db._data_frame_mapping['source_query'][itr_index];
+					Testdb2db._target_table = Testdb2db._data_frame_mapping['target_table'][itr_index];
+					Testdb2db._target_query = Testdb2db._data_frame_mapping['target_query'][itr_index];
+					Testdb2db.__common_primary_keys = Testdb2db._data_frame_mapping['common_primary_keys'][itr_index];
+					Testdb2db.__common_primary_keys = Testdb2db.__common_primary_keys.replace(" ","");
+					Testdb2db._common_header = Testdb2db._data_frame_mapping['common_header'][itr_index];
+					Testdb2db._common_header = Testdb2db._common_header.replace(" ",""); #space is not acceptable for defined header
+					Testdb2db._logger._info("Variable setting is successfully finished for case {}".format(itr_index))
+					Testdb2db._logger._info("Variable setting and iteration is successfully finised for mapping data.");
+
+					#call database engine with warnings are off
+					with warnings.catch_warnings():
+						warnings.simplefilter("ignore", category=sa_exc.SAWarning) #turn off additional warnings on the screen!
+						Testdb2db._query_data_for_source();
+						Testdb2db._printerim("Case {} is completed.\n".format(Testdb2db._case))
+				else:
+					pass
+
+			return "0";
+		except Exception as e:
+			Testdb2db._logger._error("Error occurred! in '_set_data_with_one_iteration' -> "+str(e))
 			return "1";
 		pass
 
@@ -219,8 +268,9 @@ class Testdb2db():
 			output_data_from_db = db_connection.execute(Testdb2db._source_query)
 			Testdb2db._source_data = pandas.DataFrame(output_data_from_db.fetchall());
 			Testdb2db._source_data = Testdb2db._source_data.applymap(str);
+			Testdb2db._printerim("Source data length: [{}]".format(len(Testdb2db._source_data)))
 			db_connection.close()
-			
+				
 			Testdb2db._logger._info("Data is fetched from source database.");
 			Testdb2db._query_data_for_target()
 
@@ -240,6 +290,7 @@ class Testdb2db():
 			output_data_from_db = db_connection.execute(Testdb2db._target_query)
 			Testdb2db._target_data = pandas.DataFrame(output_data_from_db.fetchall());
 			Testdb2db._target_data = Testdb2db._target_data.applymap(str);
+			Testdb2db._printerim("Target data length: [{}]".format(len(Testdb2db._target_data)))
 			db_connection.close()
 			
 			Testdb2db._logger._info("Data is fetched from target database.");
@@ -488,7 +539,7 @@ class Testdb2db():
 			raw_html_code=raw_html_code.replace("@69e396acbd4d981461374b77cabc07ff@",target_sql_statement)
 
 			#write data into report
-			html_report_name = str(Testdb2db._source_table)+str("_")+str(Testdb2db._target_table)+str("__report_")+str(time.strftime("%Y%m%d%H%M%S", time.localtime()))+str(".html")
+			html_report_name = str(Testdb2db._target_table)+str("__")+str(Testdb2db._source_table)+str("__Report_")+str(time.strftime("%Y%m%d%H%M%S", time.localtime()))+str(".html")
 			file_object_write = io.open(html_report_name, mode="w", encoding="utf-8")
 			file_object_write.write(raw_html_code)
 			
@@ -504,7 +555,7 @@ class Testdb2db():
 		"""Generate CSV report""" #buggy
 		try:
 			Testdb2db._printerim("CSV report is being generated.")
-			csv_report_name = str(Testdb2db._source_table)+str("_")+str(Testdb2db._target_table)+str("__report_")+str(time.strftime("%Y%m%d%H%M%S", time.localtime()))+str(".csv")
+			csv_report_name = str(Testdb2db._target_table)+str("__")+str(Testdb2db._source_table)+str("__Report")+str(time.strftime("%Y%m%d%H%M%S", time.localtime()))+str(".csv")
 			header = Testdb2db._header_of_result_of_comparison
 			file_object = open(csv_report_name, mode="w", newline="")
 			csv_writer = csv.writer(file_object, quoting=csv.QUOTE_ALL)
@@ -532,12 +583,13 @@ class Testdb2db():
 		pass
 
 	@classmethod
-	def master_method(cls, json_connection_file_name, output_type, onlyexist) -> str:
+	def master_method(cls, json_connection_file_name, output_type, onlyexist, onlyonecase) -> str:
 		"""Master method, where class methods are called"""
 		try:
 			Testdb2db._connection_file_name = json_connection_file_name;
 			Testdb2db._report_output_type = output_type;
 			Testdb2db._onlyexist = onlyexist;
+			Testdb2db._onlyonecase = onlyonecase;
 			Testdb2db._printerim("Script started.")
 			if Testdb2db._connection_file_name != "" and Testdb2db._report_output_type != "":
 				Testdb2db._read_json_connection();
@@ -572,7 +624,7 @@ def runner(args):
 		print("rawreportcode.txt is created")
 	else:
 		test_agent = pyKnife.Testdb2db()
-		test_agent.master_method(args.connection, args.output, args.onlyexist)
+		test_agent.master_method(args.connection, args.output, args.onlyexist, args.onlyonecase)
 
 
 def main():
@@ -581,9 +633,11 @@ def main():
 
 	my_parser.add_argument('--connection', type=str, help="Provide your connection file, Example: '--connection connection.json' (works with output and onlyexist) (required)")
 
-	my_parser.add_argument('--example', type=str, help="Choose your example option, Example: '--example connection/mapping/awreportcode' (works alone) (required)")
+	my_parser.add_argument('--example', type=str, help="Choose your example option, Example: '--example connection/mapping/rawreportcode' (works alone) (required)")
 
 	my_parser.add_argument('--output', type=str, help="Choose your output file type, Example: '--output javascript/csv' (works with connection and onlyexist) (required)")
+
+	my_parser.add_argument('--onlyonecase', type=str, help="Provide your test case number, Example '--onlyonecase <case number>/all' (works with connection and output) (optional, default is 'all')", default="all")
 
 	my_parser.add_argument('--onlyexist', type=str, help="Compare only exist data in both Source and Target, Example '--onlyexist yes/no' (works with connection and output) (optional, default is 'no')", default="no")
 
