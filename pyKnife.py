@@ -154,7 +154,7 @@ class Testdb2db():
 					Testdb2db._logger._error("File headers: '{}'".format(mapping_header_from_file));
 					return "1";
 			
-			Testdb2db._logger._info("Validation of mapping is successfully finised.");
+			Testdb2db._logger._info("Validation of mapping is successfully finihsed.");
 			Testdb2db._printerim("Mapping validation is passed.")
 			Testdb2db._variable_setting_connection();
 			return "0";
@@ -217,7 +217,6 @@ class Testdb2db():
 			db_engine = create_engine(Testdb2db._source_connection_string)
 			db_connection = db_engine.connect()
 			output_data_from_db = db_connection.execute(Testdb2db._source_query)
-			Testdb2db._source_sql_statement = "";
 			Testdb2db._source_data = pandas.DataFrame(output_data_from_db.fetchall());
 			Testdb2db._source_data = Testdb2db._source_data.applymap(str);
 			db_connection.close()
@@ -239,7 +238,7 @@ class Testdb2db():
 			db_engine = create_engine(Testdb2db._target_connection_string)
 			db_connection = db_engine.connect()
 			output_data_from_db = db_connection.execute(Testdb2db._target_query)
-			Testdb2db._target_data =pandas.DataFrame( output_data_from_db.fetchall());
+			Testdb2db._target_data = pandas.DataFrame(output_data_from_db.fetchall());
 			Testdb2db._target_data = Testdb2db._target_data.applymap(str);
 			db_connection.close()
 			
@@ -257,7 +256,6 @@ class Testdb2db():
 		"""_"""
 		try:
 			#set connection to nothing
-			Testdb2db._sqlite_connection = None
 
 			#connect memory db
 			Testdb2db._sqlite_connection = sqlite3.connect(':memory:')
@@ -311,7 +309,7 @@ class Testdb2db():
 			#fetch comparison results
 			#Source EXCEPT Target:
 				# gives rows which are in source but not in target
-				# gives rows which are in source and target but stored wrongly in target (mismatch)
+				# gives rows which are in source and target but stored wrongly in target (mismatched)
 			Testdb2db._printerim("Data is being compared.")
 			the_cursor.execute(SQL_difference_from_source_to_target)
 			Testdb2db._comparison_source_to_target = the_cursor.fetchall()
@@ -355,12 +353,12 @@ class Testdb2db():
 					source_and_target = list()
 
 					source_row = list()
-					source_row.insert(0,"Source")
+					source_row.insert(0,"Source") #we need first column for system
 					for walk in range(len(except_result[itr_index1])):
 						source_row.append(except_result[itr_index1][walk])
 
 					target_row = list()
-					target_row.insert(0,"Target")
+					target_row.insert(0,"Target") #we need first column for system
 					for walk in range(len(except_result[itr_index1])):
 						target_row.append("Not Found")
 
@@ -395,10 +393,12 @@ class Testdb2db():
 
 			Testdb2db._printerim("Report header is being prepared.")
 			header_for_report = list();
+			#source and target headers must be the same!
 			#set source header
 			header_for_report.append("System")
 			for itr_index in range(len(header)):
 				header_for_report.append(header[itr_index])
+
 			#set target header
 			header_for_report.append("System")
 			for itr_index in range(len(header)):
@@ -417,7 +417,7 @@ class Testdb2db():
 				Testdb2db._printerim("Report is NOT printed!")
 				return "0";				
 
-			#output file method calls happen here.
+			#output file method calls here.
 			if Testdb2db._report_output_type == "javascript":
 				Testdb2db._reporting_javascript();
 			elif Testdb2db._report_output_type == "csv":
@@ -564,7 +564,7 @@ def runner(args):
 		f = open("mapping1.json","w")
 		f.write("""[{\n"case":"1",\n"source_table":"source",\n"source_query":"SELECT Region AS Rg, Country AS Ctr, ItemType AS ItmTyp, SalesChannel AS Slcl, OrderPriority AS Odpr, OrderDate AS Ordt, OrderID AS Orid , ShipDate AS Shpdt, UnitsSold AS Untsl, UnitPrice AS Untpr, UnitCost AS Untcst, TotalRevenue AS Ttlrv, TotalCost AS Ttlcs, TotalProfit AS Ttlprf, id as ID FROM source ORDER BY id",\n"target_table":"target",\n"target_query":"SELECT Region_T AS Rg, Country_T AS Ctr, ItemType_T AS ItmTyp, SalesChannel_T AS Slcl, OrderPriority_T AS Odpr, OrderDate_T AS Ordt, OrderID_T AS Orid , ShipDate_T AS Shpdt, UnitsSold_T AS Untsl, UnitPrice_T AS Untpr, UnitCost_T AS Untcst, TotalRevenue_T AS Ttlrv, TotalCost_T AS Ttlcs, TotalProfit_T AS Ttlprf, id_T as ID FROM target ORDER BY",\n"common_primary_keys":"ID",\n"common_header":"Region, Country, ItemType, SalesChannel, OrderPriority, OrderDate, OrderID, ShipDate, UnitsSold, UnitPrice, UnitCost, TotalRevenue, TotalCost, TotalProfit, ID"\n}]""")
 		f.close()
-		print("mapping.json is created")
+		print("mapping1.json is created")
 	elif args.example == "jsrawreportcode":
 		f = open("rawreportcode.txt","w")
 		f.write("<script>\n$.reportInfo.dataHeaderDiff = @4055586c28f35be98535a1728a4248a9@;\n$.reportInfo.diffData = @7906899a18b96a3f8142fa93a0da4e74@;\n$.reportInfo.source.sql = \"@595aa739fc58403c7c62cc2840d0b7fb@\";\n$.reportInfo.target.sql = \"@69e396acbd4d981461374b77cabc07ff@\";\n<\\script>")
@@ -579,14 +579,13 @@ def main():
 	"""User Interface for console"""
 	my_parser = argparse.ArgumentParser()
 
-	my_parser.add_argument('--connection', type=str, help="Provide your connection file, Example: '--connection connection.json' (works with output and onlyexist) (no default)")
+	my_parser.add_argument('--connection', type=str, help="Provide your connection file, Example: '--connection connection.json' (works with output and onlyexist) (required)")
 
-	my_parser.add_argument('--example', type=str, help="Choose your example option, Example: '--example connection/mapping/awreportcode' (works alone) (no default)")
+	my_parser.add_argument('--example', type=str, help="Choose your example option, Example: '--example connection/mapping/awreportcode' (works alone) (required)")
 
-	my_parser.add_argument('--output', type=str, help="Choose your output file type, Example: '--output javascript/csv' (works with connection and output) (no default)")
+	my_parser.add_argument('--output', type=str, help="Choose your output file type, Example: '--output javascript/csv' (works with connection and onlyexist) (required)")
 
-	my_parser.add_argument('--onlyexist', type=str, help="Only exist data will be printed in the report, Example '--onlyexist yes/no' (works with connection and output) (yes default 'no')", default="no")
-
+	my_parser.add_argument('--onlyexist', type=str, help="Compare only exist data in both Source and Target, Example '--onlyexist yes/no' (works with connection and output) (optional, default is 'no')", default="no")
 
 	args = my_parser.parse_args()
 
