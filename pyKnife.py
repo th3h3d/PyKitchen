@@ -463,7 +463,11 @@ class Testdb2db():
 
 
 			#if there is no unmatched data, stop right here
-			if len(result) == 0:
+			if len(Testdb2db._source_data) == 0:
+				Testdb2db._printerim("No data in Source! Execution cancelled")
+				Testdb2db._printerim("Report is NOT printed!")
+				return "1"
+			elif len(result) == 0:
 				Testdb2db._printerim("All data is matched!")
 				Testdb2db._printerim("Report is NOT printed!")
 				return "0";				
@@ -529,7 +533,7 @@ class Testdb2db():
 					target_sql_statement = target_sql_statement + str(Testdb2db._target_query[i])
 
 			#read raw html code
-			file_object_read = io.open("rawreportcode.txt", mode="r", encoding="utf-8")
+			file_object_read = io.open("C:\\Temp\\Core_Test\\root\\bin\\rawreportcode.txt", mode="r", encoding="utf-8")
 			raw_html_code = file_object_read.read()
 
 			#replace some part of raw data
