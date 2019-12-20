@@ -533,7 +533,7 @@ class Testdb2db():
 					target_sql_statement = target_sql_statement + str(Testdb2db._target_query[i])
 
 			#read raw html code
-			file_object_read = io.open("C:\\Temp\\Core_Test\\root\\bin\\rawreportcode.txt", mode="r", encoding="utf-8")
+			file_object_read = io.open("rawreportcode.txt", mode="r", encoding="utf-8")
 			raw_html_code = file_object_read.read()
 
 			#replace some part of raw data
