@@ -268,7 +268,7 @@ class Testdb2db():
 			output_data_from_db = db_connection.execute(Testdb2db._source_query)
 			Testdb2db._source_data = pandas.DataFrame(output_data_from_db.fetchall());
 			Testdb2db._source_data = Testdb2db._source_data.applymap(str);
-			Testdb2db._printerim("Source data length: [{}]".format(len(Testdb2db._source_data)))
+			Testdb2db._printerim("Source data length: [{}] from '{}'".format(len(Testdb2db._source_data),Testdb2db._source_table))
 			db_connection.close()
 				
 			Testdb2db._logger._info("Data is fetched from source database.");
@@ -290,7 +290,7 @@ class Testdb2db():
 			output_data_from_db = db_connection.execute(Testdb2db._target_query)
 			Testdb2db._target_data = pandas.DataFrame(output_data_from_db.fetchall());
 			Testdb2db._target_data = Testdb2db._target_data.applymap(str);
-			Testdb2db._printerim("Target data length: [{}]".format(len(Testdb2db._target_data)))
+			Testdb2db._printerim("Target data length: [{}] from '{}'".format(len(Testdb2db._target_data),Testdb2db._target_table))
 			db_connection.close()
 			
 			Testdb2db._logger._info("Data is fetched from target database.");
