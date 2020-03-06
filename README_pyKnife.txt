@@ -22,23 +22,23 @@ How to run:
     Parameter is used for parsing connection file.
     Parameter works with output and onlyexist parameters.
 
-	--example -R:
+  --example -R:
     Gets certain options (connection/mapping/jsrawreportcode) to generate example file.
     Parameter works alone.
 
-	--output -R:
+  --output -R:
     Gets certain options (javascript/csv) (p.s. no default)
       javascript: Data is stored in certain javascript structure, which can be integrated other report format.
       csv: Data is stored in csv format.
     Works with connection and onlyexist parameters.
 
-	--onlyonecase
+  --onlyonecase
       Parameter is used for execution.
       Gets certain options (<case number>/all)
         <case number>: number of test case which is defined in mapping file.
         all: executes all cases which are defined in mapping file (p.s. option 'all' is defult).
         
-	--onlyexist
+  --onlyexist
     Parameter is used for comparing only exist data in both Source and Target
     Gets certain parameters (yes/no) (p.s. option 'no' is default).
       yes: Only data exists in source and in target will be tested and reported.
