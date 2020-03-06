@@ -1,0 +1,37 @@
+[
+    {
+        "case": "1",
+        "column": "Currency",
+        "type": "isValueRange",
+        "arg1": "(A|B|C)",
+        "arg2": null
+    },
+    {
+        "case": "2",
+        "column": "Currency",
+        "type": "isValueRange",
+        "arg1": "(EUR|DKK|SEK|NOK)",
+        "arg2": null
+    },
+    {
+        "case": "3",
+        "column": "Segment MIC",
+        "type": "isDependency",
+        "arg1": "SELECT count(*) FROM table_name WHERE \"Segment MIC\" = \"DSME\" and \"Currency\" != \"DDK\";",
+        "arg2": "true"
+    },
+    {
+        "case": "4",
+        "column": "Segment MIC",
+        "type": "isDependency",
+        "arg1": "SELECT \"Segment MIC\", \"Currency\" FROM table_name WHERE \"Segment MIC\" = \"DSME\" and \"Currency\" != \"DDK\";",
+        "arg2": "false"
+    },
+    {
+        "case": "5",
+        "column": "Currency",
+        "type": "isDependency",
+        "arg1": "SELECT count(*) FROM table_name WHERE \"Operating MIC\" = \"XSTO\" and \"Currency\" NOT IN (\"EUR\", \"DKK\",\"SEK\", \"NOK\");",
+        "arg2": "true"
+    }
+]
