@@ -108,6 +108,13 @@ Test Types:
     
   ISUNIQUE-0
     -check that column has only unique values
+  
+  ISDEPENDENCY-2
+    -Load report to database and run your dependency test query (defined in arg1) over database.
+    arg1 should be used for SQL statment in quote and needed slashes.
+    arg2 can get two open "true" or "false":
+        true: after test execution, creat SQLite database format of tested csv report.
+        false: do not create any database format, do your testing over memory database.
 
   
   What does -0, -1, 2 mean?
@@ -157,4 +164,4 @@ Test Types:
   -----------------------------------------------------
   run command "python pyFork.py --report report.csv --testcase.json --output csv"
   or
-  run command "python pyFork.py --report report.csv --testcase.json --output json"
+  run command "python pyFork.py --report report.csv --testcase.json --output html"
