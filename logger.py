@@ -22,7 +22,7 @@ class Logger():
 		"""Set mandatory input.
 		"""
 		self._FILE_NAME = time.strftime("%Y%m%d", time.localtime())
-		self._FILE_NAME = "..\\tmp\\"+str(self._FILE_NAME)+".log"
+		self._FILE_NAME = str(self._FILE_NAME)+".log"
 		self._FILE_MODE = "a"
 		self._FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 
