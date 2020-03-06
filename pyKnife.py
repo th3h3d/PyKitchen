@@ -637,7 +637,7 @@ def main():
 
 	my_parser.add_argument('--connection', type=str, help="Provide your connection file, Example: '--connection connection.json' (works with output and onlyexist) (required)")
 
-	my_parser.add_argument('--example', type=str, help="Choose your example option, Example: '--example connection/mapping/rawreportcode' (works alone) (required)")
+	my_parser.add_argument('--example', type=str, help="Choose your example option, Example: '--example connection/mapping/jsrawreportcode' (works alone) (required)")
 
 	my_parser.add_argument('--output', type=str, help="Choose your output file type, Example: '--output javascript/csv' (works with connection and onlyexist) (required)")
 
