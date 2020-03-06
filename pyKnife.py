@@ -543,7 +543,7 @@ class Testdb2db():
 			raw_html_code=raw_html_code.replace("@69e396acbd4d981461374b77cabc07ff@",target_sql_statement)
 
 			#write data into report
-			html_report_name = "..\\out\\"+str(Testdb2db._target_table)+str("__")+str(Testdb2db._source_table)+str("__Report_")+str(time.strftime("%Y%m%d%H%M%S", time.localtime()))+str(".html")
+			html_report_name = str(Testdb2db._target_table)+str("__")+str(Testdb2db._source_table)+str("__Report_")+str(time.strftime("%Y%m%d%H%M%S", time.localtime()))+str(".html")
 			file_object_write = io.open(html_report_name, mode="w", encoding="utf-8")
 			file_object_write.write(raw_html_code)
 			
@@ -559,7 +559,7 @@ class Testdb2db():
 		"""Generate CSV report""" #buggy
 		try:
 			Testdb2db._printerim("CSV report is being generated.")
-			csv_report_name = "..\\out\\"+str(Testdb2db._target_table)+str("__")+str(Testdb2db._source_table)+str("__Report")+str(time.strftime("%Y%m%d%H%M%S", time.localtime()))+str(".csv")
+			csv_report_name = str(Testdb2db._target_table)+str("__")+str(Testdb2db._source_table)+str("__Report")+str(time.strftime("%Y%m%d%H%M%S", time.localtime()))+str(".csv")
 			header = Testdb2db._header_of_result_of_comparison
 			file_object = open(csv_report_name, mode="w", newline="")
 			csv_writer = csv.writer(file_object, quoting=csv.QUOTE_ALL)
@@ -613,7 +613,7 @@ def runner(args):
 	"""runner stays in between master method and main method"""
 	if args.example == "connection":
 		f = open("connection.json","w")
-		f.write("""[{\n"source_database_type":"sqlite",\n"source_connection_string":"sqlite:////Users/th3h3d/Desktop/pyKnife/testdb.db",\n"target_database_type":"oracle",\n"target_connection_string":"sqlite:////Users/th3h3d/Desktop/pyKnife/testdb.db",\n"mapped_tables":"mapping1.json"\n}]""")
+		f.write("""[{\n"source_database_type":"sqlite",\n"source_connection_string":"sqlite:////Users/th3h3d/Desktop/pyKnife/testdb.db",\n"target_database_type":"oracle",\n"target_connection_string":"sqlite:////Users/<username>/Desktop/pyKnife/testdb.db",\n"mapped_tables":"mapping1.json"\n}]""")
 		f.close()
 		print("connection.json is created")
 	elif args.example == "mapping":
