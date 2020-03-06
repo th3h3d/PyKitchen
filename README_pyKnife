@@ -1,0 +1,11 @@
+pyKnife:
+  pyKnife is used for database testing, it is used to compare two database (source and target).
+
+How pyKnife works: 
+  -
+
+How to run:
+  pyKnife can be ran with Python 3 and it needs additionally library "Pandas".
+  
+  run command "python pyKnife.py --help" which will help you.
+  
