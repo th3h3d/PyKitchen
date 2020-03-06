@@ -8,6 +8,7 @@ import argparse
 import pyFork
 import logger
 import csv
+import sqlite3
 
 #Magic Methods
 __version__ = '1.0'
@@ -22,6 +23,10 @@ class TestCSV():
 	_failed = 0
 
 	_logger = logger.Logger();
+
+	_memory_database_creation_flag = 0;
+	_file_database_creation_flag = 0;
+	_generic_cursor = 0;
 
 	_csv_file_name = "";
 	_json_file_name = "";
@@ -143,6 +148,8 @@ class TestCSV():
 					TestCSV._isvaluerange(TestCSV._mapping_frame["column"][itr_index],TestCSV._mapping_frame["arg1"][itr_index])
 				elif TestCSV._mapping_frame["type"][itr_index].upper() == "ISUNIQUE":
 					TestCSV._isunique(TestCSV._mapping_frame["column"][itr_index])
+				elif TestCSV._mapping_frame["type"][itr_index].upper() == "ISDEPENDENCY":
+					TestCSV._isdependency(TestCSV._mapping_frame["column"][itr_index],TestCSV._mapping_frame["arg1"][itr_index],TestCSV._mapping_frame["arg2"][itr_index])
 				else:
 					pass
 				TestCSV._logger._info("Case '{}' iteration is successfully finished.".format(itr_index+1))
@@ -189,7 +196,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,TestCSV._isinteger_regex,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsInteger check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsInteger check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isinteger' -> "+str(e))
@@ -209,7 +216,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,TestCSV._isnegativeinteger_regex,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsNegativeInteger check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsNegativeInteger check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isnegativeinteger' -> "+str(e))
@@ -229,7 +236,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,TestCSV._isdouble_regex,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsDouble check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsDouble check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isdouble' -> "+str(e))
@@ -249,7 +256,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,TestCSV._isnegativedouble_regex,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsNegativeDouble check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsNegativeDouble check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isnegativedouble' -> "+str(e))
@@ -269,7 +276,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,"null","null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsNull check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsNull check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isnull' -> "+str(e))
@@ -289,7 +296,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,"null","null","<null>")
 
-			TestCSV._logger._info("IsNotNull check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsNotNull check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isnotnull' -> "+str(e))
@@ -309,7 +316,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,TestCSV._isalphanumeric_regex,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsAlphaNumeric check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsAlphaNumeric check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isalphanumeric' -> "+str(e))
@@ -329,7 +336,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,TestCSV._isalphabetic_regex,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsAlphabetic check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsAlphabetic check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isalphabetic' -> "+str(e))
@@ -349,7 +356,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,TestCSV._isspace_regex,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsSpace check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsSpace check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isspace' -> "+str(e))
@@ -369,7 +376,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsRegex check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsRegex check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isregex' -> "+str(e))
@@ -402,7 +409,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsLessThan check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsLessThan check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_islessthan' -> "+str(e))
@@ -425,7 +432,7 @@ class TestCSV():
 				else:
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,"null",TestCSV._data_frame[column_name][itr_index])
-			TestCSV._logger._info("IsGreaterThan check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsGreaterThan check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isgreaterthan' -> "+str(e))
@@ -449,7 +456,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsLessThanOrEqualsTo check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsLessThanOrEqualsTo check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_islessthanorequalsto' -> "+str(e))
@@ -473,7 +480,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsGreaterThanOrEqualsTo check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsGreaterThanOrEqualsTo check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isgreaterthanorequalsto' -> "+str(e))
@@ -497,7 +504,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,arg2,TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsInBetween check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsInBetween check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isinbetween' -> "+str(e))
@@ -521,7 +528,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,arg2,TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsInBetweenOrEqualsTo check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsInBetweenOrEqualsTo check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isinbetweenorequalsto' -> "+str(e))
@@ -542,7 +549,7 @@ class TestCSV():
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,"null",TestCSV._data_frame[column_name][itr_index])
 
 
-			TestCSV._logger._info("IsMaxLength check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsMaxLength check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_ismaxlength' -> "+str(e))
@@ -563,7 +570,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsMinLenght check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsMinLenght check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isminlenght' -> "+str(e))
@@ -583,7 +590,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsExactLength check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsExactLength check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isexactlength' -> "+str(e))
@@ -605,7 +612,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,arg2,TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsLenghtInBetween check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsLenghtInBetween check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isexactlength' -> "+str(e))
@@ -625,7 +632,7 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,arg2,TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsLenghtInBetweenOrEqualsTo check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsLenghtInBetweenOrEqualsTo check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_islenghtinbetweenorequalsto' -> "+str(e))
@@ -646,7 +653,7 @@ class TestCSV():
 					TestCSV._failed+= 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsValueRange check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsValueRange check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isvaluerange' -> "+str(e))
@@ -667,10 +674,115 @@ class TestCSV():
 					TestCSV._failed += 1; 
 					TestCSV._collect_failure(column_name,itr_index,test_type,arg1,"null",TestCSV._data_frame[column_name][itr_index])
 
-			TestCSV._logger._info("IsUnique check is complated for column '{}'".format(column_name))
+			TestCSV._logger._info("IsUnique check is completed for column '{}'".format(column_name))
 			return "0"
 		except Exception as e:
 			TestCSV._logger._error("Error occurred! in '_isunique' -> "+str(e))
+			return "1"
+		pass
+
+
+	@classmethod
+	def _create_table_in_memory(cls, table_name, cache_or_file) -> str:
+		"""_"""
+		try:
+			header = TestCSV._csv_header;
+			SQL_start = """CREATE TABLE "{}" (""".format(table_name);
+			SQL_body = "";
+			SQL_end = """);""";
+			for itr_index in range(len(header)):
+				SQL_body = SQL_body +"'"+ header[itr_index] + "' TEXT, ";
+			SQL_body = SQL_body[:-2]
+
+			table_creation_string = SQL_start+SQL_body+SQL_end
+
+			if cache_or_file == 1:
+				TestCSV._memory_database_creation_flag = 1
+			elif cache_or_file == 2:
+				TestCSV._file_database_creation_flag = 1
+			else:
+				pass
+
+			return table_creation_string;
+
+		except Exception as e:
+			TestCSV._logger._error("Error occurred! in '_create_table_in_memory' -> "+str(e))
+			return "1";
+		pass
+
+
+	@classmethod
+	def _isdependency(cls, column_name, arg1, arg2) -> str:
+		"""executes _isdependency method"""
+		try:
+			test_type = "IsDependency";
+
+			#database creation process
+			if TestCSV._memory_database_creation_flag == 0:
+				#connect SQLite db
+				TestCSV._sqlite_connection = sqlite3.connect(':memory:')
+				TestCSV._logger._info("(cache)-Database is craeted in the memory.")
+
+				#create Mr cursor
+				TestCSV._generic_cursor = TestCSV._sqlite_connection.cursor()
+				TestCSV._logger._info("(cache)-The cursor is created.")
+
+				#create  table
+				table_creation_string = TestCSV._create_table_in_memory("table_name",1)
+				TestCSV._logger._info("(cache)-Table creation statement: {}".format(table_creation_string))
+				TestCSV._sqlite_connection.execute(table_creation_string)
+				TestCSV._logger._info("(cache)-Table is created in memory.")
+
+				data_with_list_form = TestCSV._data_frame.values.tolist() #convert dataframe to python list (array)
+				for itr_index in range(len(data_with_list_form)):
+					TestCSV._sqlite_connection.execute("INSERT INTO table_name VALUES {};".format(str(data_with_list_form[itr_index]).replace("[","(").replace("]",")")))
+				TestCSV._sqlite_connection.commit()
+				TestCSV._logger._info("(cache)-Data is loaded to cache.")
+
+			elif arg2.upper() == "TRUE" and TestCSV._file_database_creation_flag == 0:
+				database_file_name = TestCSV._csv_file_name+"_Database"+time.strftime("%Y%m%d%H%M%S", time.localtime());
+				file_object = open(str(database_file_name)+".db","w")
+				file_object.close()
+				sqlite_connection_for_file = sqlite3.connect(str(database_file_name)+".db")
+				TestCSV._logger._info("(file)-Database file '{}' is craeted in the memory.".format(str(database_file_name)+".db"))
+
+				#create Mr cursor
+				cursor_for_file = sqlite_connection_for_file.cursor()
+				TestCSV._logger._info("(file)-The cursor is created.")
+
+				#create table
+				table_creation_string = TestCSV._create_table_in_memory("table_name",2)
+				TestCSV._logger._info("(file)-Table creation statement: {}".format(table_creation_string))
+				sqlite_connection_for_file.execute(table_creation_string)
+				TestCSV._logger._info("(file)-Table is created in memory.")
+
+				data_with_list_form = TestCSV._data_frame.values.tolist() #convert dataframe to python list (array)
+				for itr_index in range(len(data_with_list_form)):
+					sqlite_connection_for_file.execute("INSERT INTO table_name VALUES {};".format(str(data_with_list_form[itr_index]).replace("[","(").replace("]",")")))
+				sqlite_connection_for_file.commit()
+				TestCSV._logger._info("(file)-Data is inserted to file.")
+
+			else:
+				pass
+
+			TestCSV._generic_cursor.execute(arg1);
+			query_rsult = TestCSV._generic_cursor.fetchall()
+			TestCSV._logger._info("Executed query: {}".format(arg1))
+			TestCSV._logger._info("Return of executed query: {}".format(query_rsult))
+
+			bug_store = [];
+
+			if query_rsult[0][0] == 0:
+				TestCSV._passed += 1; 
+			else:
+				TestCSV._failed += 1;
+				#colum_name, row_number, test_type, arg1, arg2, data
+				TestCSV._collect_failure(column_name,"Row Number cannot be shown with dependency test.",test_type,arg1,arg2,str(query_rsult))
+
+			TestCSV._logger._info("IsDependency check is completed for column '{}'".format(column_name))
+			return "0"
+		except Exception as e:
+			TestCSV._logger._error("Error occurred! in '_isdependency' -> "+str(e))
 			return "1"
 		pass
 
@@ -687,14 +799,15 @@ class TestCSV():
 				csv_writer.writerows(TestCSV._found_bugs)
 				file.close()
 				TestCSV._logger._info("'{}' report generated.".format(file_name))
-			elif output_type.upper() == "JSON":
-				file = open(file_name+".json", mode="w")
-				json_data = "";
+			elif output_type.upper() == "HTML":
+				file = open(file_name+".html", mode="w")
+				html_header_start = """<table class="table table-bordered table-hover table-condensed"><thead><style>table {font-family: arial, sans-serif; border-collapse: collapse; width: 100%;}td, th {border: 1px solid #dddddd;text-align: left;padding: 8px;}tr:nth-child(even) {background-color: #dddddd;}</style><tr><th title="Field #1">COLUMN_NAME</th><th title="Field #2">ROW_NUMER</th><th title="Field #3">TEST_TYPE</th><th title="Field #4">ARG_1</th><th title="Field #5">ARG_2</th><th title="Field #6">FAILED_DATA</th></tr></thead><tbody>"""
+				html_header_end = """</tbody></table>"""
+				html_data = "";
 				for itr_index in range(len(TestCSV._found_bugs)):
-					json_data += """{}"{}":"{}","{}":"{}","{}":"{}","{}":"{}","{}":"{}","{}":"{}"{}""".format("{",header[0],TestCSV._found_bugs[itr_index][0],header[1],TestCSV._found_bugs[itr_index][1],header[2],TestCSV._found_bugs[itr_index][2],header[3],TestCSV._found_bugs[itr_index][3],header[4],TestCSV._found_bugs[itr_index][4],header[5],TestCSV._found_bugs[itr_index][5],"},")
-				json_data = json_data[:-1];
-				json_data = "["+json_data+"]";
-				file.write(json_data)
+					html_data = html_data + "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(TestCSV._found_bugs[itr_index][0],TestCSV._found_bugs[itr_index][1],TestCSV._found_bugs[itr_index][2],TestCSV._found_bugs[itr_index][3].replace('"','&quot;'),TestCSV._found_bugs[itr_index][4],TestCSV._found_bugs[itr_index][5].replace("'","&#39;"))
+				html_ready = html_header_start+html_data+html_header_end;
+				file.write(html_ready)
 				file.close()
 				TestCSV._logger._info("'{}' report generated.".format(file_name))
 			else:
@@ -756,7 +869,7 @@ def main():
 
 	my_parser.add_argument('--example', type=str, help="Provide your testcase file, Example: 'report' or 'testcase'")
 
-	my_parser.add_argument('--output', type=str, help="Provide your output file type, Example 'csv' or 'json'")
+	my_parser.add_argument('--output', type=str, help="Provide your output file type, Example 'csv' or 'html'")
 
 	args = my_parser.parse_args()
 
