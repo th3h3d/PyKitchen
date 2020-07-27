@@ -1,6 +1,6 @@
 pyFork:
   It enables people who needs to test data which is coming with CSV format. 23 diffirent test types can be executed over CSV files.
-  All test type can be define with diffirent parameters and saves in testcase file which has to be JSON file format.
+  All test type can be defined with diffirent parameters and saves in testcase file which has to be JSON file format.
 
 How pyFork works: 
   
@@ -35,7 +35,7 @@ How pyFork works:
 How to run:
   pyFork can be ran with Python 3 and it needs additionally library "Pandas".
   
-  run command "python pyFork.py --help" which will help you.
+  run the command "python pyFork.py --help" and which will guide you.
   
 Test Types:
   ISINTEGER-0
@@ -97,10 +97,10 @@ Test Types:
     -check that column has only exact char length -arg1-
     
   ISLENGTHINBETWEEN-2
-    -check that column has only char length between -arg1- and -arg1-
+    -check that column has only char length between -arg1- and -arg2-
     
   ISLENGTHINBETWEENOREQUALSTO-2
-    -check that column has only char length between -arg1- and -arg1- or equals to -arg1- and -arg1-
+    -check that column has only char length between -arg1- and -arg2- or equals to -arg1- and -arg2-
      
   ISVALUERANGE-1
     -check that column has only defined values range -arg1-
@@ -112,9 +112,9 @@ Test Types:
   ISDEPENDENCY-2
     -Load report to database and run your dependency test query (defined in arg1) over database.
     arg1 should be used for SQL statment in quote and needed slashes.
-    arg2 can get two open "true" or "false":
-        true: after test execution, creat SQLite database format of tested csv report.
-        false: do not create any database format, do your testing over memory database.
+    arg2 can get two options "true" or "false":
+        true: after test execution, creat SQLite database file of tested csv report.
+        false: do not create any database file, do your testing over database in the memory.
 
   
   What does -0, -1, 2 mean?
