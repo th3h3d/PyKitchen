@@ -582,7 +582,7 @@ class Testdb2db():
 			Testdb2db._logger._info("'{}' message is printed to user!".format(message_to_print_on_console))
 			return "0"
 		except Exception as e:
-			Testdb2db._logger._error("Error occurred! in 'main' -> "+str(e))
+			Testdb2db._logger._error("Error occurred! in '_printerim' -> "+str(e))
 			return "1"
 		pass
 
