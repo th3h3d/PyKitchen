@@ -1,5 +1,5 @@
 pyFork:
-  It enables people who needs to test data which is coming with CSV format. 23 diffirent test types can be executed over CSV files.
+  It enables people who need to test data which is coming with CSV format. 23 diffirent test types can be executed over CSV files.
   All test type can be defined with diffirent parameters and saves in testcase file which has to be JSON file format.
 
 How pyFork works: 
